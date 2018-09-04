@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -92,7 +91,7 @@ func NewTerminus(qm *QManager, cfg *RoutingConfig) (*Terminus, error) {
 
 func (t *Terminus) Publish(m *pb.Message) {
 	var clientlist []*subscription
-	fullUri := base64.URLEncoding.EncodeToString(m.Namespace) + "/" + m.Uri
+	fullUri := base64.URLEncoding.EncodeToString(m.Tbs.Namespace) + "/" + m.Tbs.Uri
 	t.rMatchSubs(fullUri, func(s *subscription) {
 		clientlist = append(clientlist, s)
 	})
@@ -136,9 +135,17 @@ func (t *Terminus) Unsubscribe(subid ID) error {
 	return nil
 }
 
+func toSubID(entityHash []byte, subid string) ID {
+	//hash the two together
+	panic("ni")
+}
+
 //This is the real function to call for creating a subscription or resuming an existing one
 //the URI must already have the namespace in front
-func (t *Terminus) CreateSubscription(entityVK []byte, subid ID, uri string) (*Queue, error) {
+func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
+
+	subid := toSubID(ps.Tbs.SourceEntity, ps.Tbs.Id)
+
 	//First see if this already exists
 	t.rstree_lock.Lock()
 	node, ok := t.rstree[subid]
@@ -148,9 +155,8 @@ func (t *Terminus) CreateSubscription(entityVK []byte, subid ID, uri string) (*Q
 	if ok {
 		nv := node.v.Load().(subTreeNodeValue)
 		sub := nv.subz[subid]
-		if !bytes.Equal(sub.q.EntityVK(), entityVK) {
-			return nil, fmt.Errorf("attempt to resume a subscription created by a different entity")
-		}
+		//In case the proof has changed
+		sub.q.SetSubRequest(ps)
 		return sub.q, nil
 	}
 
@@ -159,20 +165,22 @@ func (t *Terminus) CreateSubscription(entityVK []byte, subid ID, uri string) (*Q
 	if err != nil {
 		return nil, err
 	}
-	q.SetEntityVK(entityVK)
-	q.SetSubscription(uri)
+	q.SetSubscription(ps.Tbs.Uri)
+	q.SetSubRequest(ps)
 	sub := &subscription{
 		subid:   subid,
 		q:       q,
-		uri:     uri,
+		uri:     ps.Tbs.Uri,
 		created: time.Now(),
 	}
-	t.addSub(uri, sub)
+	t.addSub(ps.Tbs.Uri, sub)
 	return q, nil
 }
 
 //addSub adds a subscription to terminus.
 func (tm *Terminus) addSub(topic string, s *subscription) {
+	//TODO this function also needs to create the subscription in the DR
+	//it has what it needs in s.q.GetSubRequest
 	parts := strings.Split(topic, "/")
 	fmt.Println("Add subscription: ", parts)
 	node := tm.stree.addSub(parts, s)

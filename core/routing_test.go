@@ -102,18 +102,18 @@ func TestBasicSubscribe(t *testing.T) {
 	c2 := mkConsumer(t, ctx, q2, 3)
 
 	m1 := mkmsg()
-	m1.Namespace = ns
-	m1.Uri = "foo/bar"
+	m1.Tbs.Namespace = ns
+	m1.Tbs.Uri = "foo/bar"
 	tm.Publish(m1)
 
 	m2 := mkmsg()
-	m2.Namespace = ns
-	m2.Uri = "foo/baz"
+	m2.Tbs.Namespace = ns
+	m2.Tbs.Uri = "foo/baz"
 	tm.Publish(m2)
 
 	m3 := mkmsg()
-	m3.Namespace = ns
-	m3.Uri = "bar/buz"
+	m3.Tbs.Namespace = ns
+	m3.Tbs.Uri = "bar/buz"
 	tm.Publish(m3)
 
 	time.Sleep(100 * time.Millisecond)

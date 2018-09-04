@@ -118,7 +118,7 @@ type QueueHeader struct {
 	Created time.Time
 
 	//Used to ensure resubscriptions are done by the same entity
-	EntityVK []byte
+	SubRequest *pb.PeerSubscription
 
 	//Used for rebuilding the subscription mux from queues
 	Subscription string
@@ -378,17 +378,19 @@ func (q *Queue) Header() *QueueHeader {
 	return q.hdr
 }
 
-func (q *Queue) EntityVK() []byte {
+func (q *Queue) SetSubRequest(r *pb.PeerSubscription) {
 	q.mu.Lock()
-	defer q.mu.Unlock()
-	return q.hdr.EntityVK
-}
-func (q *Queue) SetEntityVK(vk []byte) {
-	q.mu.Lock()
-	q.hdr.EntityVK = vk
+	q.hdr.SubRequest = r
 	q.hdrChanged = true
 	q.mu.Unlock()
 }
+
+func (q *Queue) GetSubRequest() *pb.PeerSubscription {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.hdr.SubRequest
+}
+
 func (q *Queue) SetSubscription(s string) {
 	q.mu.Lock()
 	q.hdr.Subscription = s
