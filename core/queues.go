@@ -11,7 +11,7 @@ import (
 
 	"github.com/dgraph-io/badger"
 	"github.com/golang/protobuf/proto"
-	"github.com/immesys/wavemq/pb"
+	pb "github.com/immesys/wavemq/mqpb"
 )
 
 //If a short queue is dequeued less than this amount of time ago

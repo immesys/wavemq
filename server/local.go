@@ -7,7 +7,7 @@ import (
 
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
-	"github.com/immesys/wavemq/pb"
+	pb "github.com/immesys/wavemq/mqpb"
 	"google.golang.org/grpc"
 )
 

@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
-	"github.com/immesys/wavemq/pb"
+	pb "github.com/immesys/wavemq/mqpb"
+	"golang.org/x/crypto/sha3"
 )
 
 type ID string
@@ -90,9 +91,11 @@ func NewTerminus(qm *QManager, cfg *RoutingConfig) (*Terminus, error) {
 }
 
 func (t *Terminus) Publish(m *pb.Message) {
+	fmt.Printf("publish called \n")
 	var clientlist []*subscription
 	fullUri := base64.URLEncoding.EncodeToString(m.Tbs.Namespace) + "/" + m.Tbs.Uri
 	t.rMatchSubs(fullUri, func(s *subscription) {
+		fmt.Printf("publish matched sub\n")
 		clientlist = append(clientlist, s)
 	})
 
@@ -136,14 +139,16 @@ func (t *Terminus) Unsubscribe(subid ID) error {
 }
 
 func toSubID(entityHash []byte, subid string) ID {
-	//hash the two together
-	panic("ni")
+	h := sha3.New256()
+	h.Write(entityHash)
+	h.Write([]byte(subid))
+	return ID(base64.URLEncoding.EncodeToString(h.Sum(nil)))
 }
 
 //This is the real function to call for creating a subscription or resuming an existing one
 //the URI must already have the namespace in front
 func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
-
+	fulluri := base64.URLEncoding.EncodeToString(ps.Tbs.Namespace) + "/" + ps.Tbs.Uri
 	subid := toSubID(ps.Tbs.SourceEntity, ps.Tbs.Id)
 
 	//First see if this already exists
@@ -165,15 +170,15 @@ func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
 	if err != nil {
 		return nil, err
 	}
-	q.SetSubscription(ps.Tbs.Uri)
+	q.SetSubscription(fulluri)
 	q.SetSubRequest(ps)
 	sub := &subscription{
 		subid:   subid,
 		q:       q,
-		uri:     ps.Tbs.Uri,
+		uri:     fulluri,
 		created: time.Now(),
 	}
-	t.addSub(ps.Tbs.Uri, sub)
+	t.addSub(fulluri, sub)
 	return q, nil
 }
 

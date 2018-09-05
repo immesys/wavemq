@@ -1,15 +1,19 @@
 package core
 
 import (
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/immesys/wave/eapi"
+	"github.com/immesys/wave/iapi"
 	"github.com/immesys/wave/localdb/lls"
 	"github.com/immesys/wave/localdb/poc"
+	"github.com/immesys/wave/storage/overlay"
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wave/wve"
-	"github.com/immesys/wavemq/pb"
+	pb "github.com/immesys/wavemq/mqpb"
 )
 
 type AuthModule struct {
@@ -35,6 +39,13 @@ func NewAuthModule(cfg *AuthConfig) (*AuthModule, error) {
 	if err != nil {
 		return nil, err
 	}
+	si, err := overlay.NewOverlay(cfg.WaveConfig.Storage)
+	if err != nil {
+		fmt.Printf("storage overlay error: %v\n", err)
+		os.Exit(1)
+	}
+
+	iapi.InjectStorageInterface(si)
 	ws := poc.NewPOC(llsdb)
 	eapi := eapi.NewEAPI(ws)
 	return &AuthModule{

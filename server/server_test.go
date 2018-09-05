@@ -10,7 +10,7 @@ import (
 
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wavemq/core"
-	"github.com/immesys/wavemq/pb"
+	pb "github.com/immesys/wavemq/mqpb"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
@@ -55,9 +55,15 @@ func gettm(t testing.TB, qm *core.QManager) *core.Terminus {
 func getam(t testing.TB) *core.AuthModule {
 	td, err := ioutil.TempDir("/tmp", "mq_am")
 	require.NoError(t, err)
+	storage := make(map[string]map[string]string)
+	storage["default"] = make(map[string]string)
+	storage["default"]["provider"] = "http_v1"
+	storage["default"]["url"] = "https://standalone.storage.bwave.io/v1"
+	storage["default"]["version"] = "1"
 	am, err := core.NewAuthModule(&core.AuthConfig{
 		WaveConfig: &waved.Configuration{
 			Database: td,
+			Storage:  storage,
 		},
 	})
 	require.NoError(t, err)
@@ -96,6 +102,7 @@ func TestServer(t *testing.T) {
 			fmt.Printf("got message! %v\n", msg)
 		}
 	}()
+	time.Sleep(1 * time.Second)
 
 	client.Publish(context.Background(), &pb.PublishParams{
 		Namespace: ns,

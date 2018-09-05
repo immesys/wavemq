@@ -1,6 +1,6 @@
 syntax = "proto3";
 //Version 1.0
-package pb;
+package mqpb;
 
 import "eapi.proto";
 
