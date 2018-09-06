@@ -12,8 +12,6 @@ import (
 	"github.com/immesys/wavemq/server"
 )
 
-//TODO upstream doesn't seem to work properly if dr starts disconnected
-//TODO persist router ID
 type Configuration struct {
 	RoutingConfig core.RoutingConfig
 	WaveConfig    waved.Configuration
