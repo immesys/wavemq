@@ -356,13 +356,16 @@ func (qm *QManager) bgTasks() {
 				q.remove()
 				continue
 			}
-			//Write out a new header
+			//Write out a new header. Flush will also do this, but for an active
+			//queue, the flush might not trigger below
+			q.mu.Lock()
 			if q.hdrChanged {
-				err := q.WriteHeader()
+				err := q.writeHeader()
 				if err != nil {
 					panic(err)
 				}
 			}
+			q.mu.Unlock()
 
 			if nw.Sub(q.lastDequeue) > IdleFlushTime ||
 				q.uncommittedSize > IdleFlushSize {
@@ -384,6 +387,7 @@ func (q *Queue) SubscribeNotifications(n *NotificationSubscriber) {
 	q.mu.Unlock()
 }
 
+//Get an iterator that can be used to peek items in the queue without dequeueing them
 func (q *Queue) PeekIterator() *Iterator {
 	q.mu.Lock()
 	it := &Iterator{
@@ -591,74 +595,85 @@ func (q *Queue) ck() {
 	}
 }
 
-//Move items from uncommitted to committed, writing them to the database
+//Flush does three things:
+// Move items from uncommitted to committed, writing them to the database
+// Remove GC'd items from the database
+// Write out the header if it has changed
 func (q *Queue) Flush() error {
-	fmt.Printf("flush called\n")
-	q.ck()
-	defer q.ck()
-	q.WriteHeader()
 	//We release the q mu quite early, so we hold the flushmu to prevent
 	//accidentally flushing concurrently
 	q.flushmu.Lock()
 	defer q.flushmu.Unlock()
 
 	q.mu.Lock()
-	if q.uncommitedHead == nil {
-		q.mu.Unlock()
-		return nil
+	//Flush the header if it has changed
+	if q.hdrChanged {
+		q.writeHeader()
 	}
-	q.ck()
-	ucHead := q.uncommitedHead
-	ucTail := q.uncommitedTail
-	if q.head == nil {
-		fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
-		q.head = ucHead
-		q.tail = ucTail
-	} else {
-		fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
-		q.tail.Next = ucHead
-		q.tail = ucTail
-	}
-	q.size += q.uncommittedSize
-	q.length += q.uncommittedLength
-	q.uncommittedSize = 0
-	q.uncommittedLength = 0
-	q.uncommitedHead = nil
-	q.uncommitedTail = nil
-	q.ck()
+	//Should we be writing the queue out to DB?
+	syncQueue := q.uncommitedHead != nil
+	//Keep a local copy of the GC list
 	togc := q.togc
 	q.togc = []string{}
+	//local copies of uc pointers
+	ucHead := q.uncommitedHead
+	ucTail := q.uncommitedTail
+	if syncQueue {
+		if q.head == nil {
+			fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
+			q.head = ucHead
+			q.tail = ucTail
+		} else {
+			fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
+			q.tail.Next = ucHead
+			q.tail = ucTail
+		}
+		q.size += q.uncommittedSize
+		q.length += q.uncommittedLength
+		q.uncommittedSize = 0
+		q.uncommittedLength = 0
+		q.uncommitedHead = nil
+		q.uncommitedTail = nil
+		q.ck()
+	}
 	q.mu.Unlock()
+
+	//Is there something to be done?
+	if !syncQueue && len(togc) == 0 {
+		return nil
+	}
 
 	//While dequeue might modify q.head it won't modify the pointers within
 	//the elements, so there is no danger of the list being corrupted while
 	//we walk it here. The only danger is that another flush modifies
 	//the Next pointer of the tail, so we hold flushmu to prevent that
 	txn := q.mgr.db.NewTransaction(true)
-	//Be prepared to break the transaction into smaller ones
-bulkflush:
-	for {
-		it := ucHead
-		for it != nil {
-			nextit := it.Next
-			bin, err := proto.Marshal(it.Content)
-			if err != nil {
-				panic(err)
-			}
-			err = txn.Set([]byte(keyQueueItem(q.hdr.ID, it.Index)), bin)
-			if err == badger.ErrTxnTooBig {
-				err := txn.Commit(nil)
+	if syncQueue {
+		//Be prepared to break the transaction into smaller ones
+	bulkflush:
+		for {
+			it := ucHead
+			for it != nil {
+				nextit := it.Next
+				bin, err := proto.Marshal(it.Content)
 				if err != nil {
+					panic(err)
+				}
+				err = txn.Set([]byte(keyQueueItem(q.hdr.ID, it.Index)), bin)
+				if err == badger.ErrTxnTooBig {
+					err := txn.Commit(nil)
+					if err != nil {
+						return err
+					}
+					txn = q.mgr.db.NewTransaction(true)
+					continue bulkflush
+				} else if err != nil {
 					return err
 				}
-				txn = q.mgr.db.NewTransaction(true)
-				continue bulkflush
-			} else if err != nil {
-				return err
+				it = nextit
 			}
-			it = nextit
+			break
 		}
-		break
 	}
 	for _, e := range togc {
 		fmt.Printf("GC %q\n", e)
@@ -678,7 +693,6 @@ bulkflush:
 		}
 	}
 	txn.Commit(nil)
-
 	return nil
 }
 
