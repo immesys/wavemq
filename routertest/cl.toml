@@ -12,7 +12,7 @@
 [QueueConfig]
   queueDataStore = "./cldata/queue"
   # This is one day in seconds
-  queueExpiry = 86400
+  queueExpiry = 600
   # 1000 items
   subscriptionQueueMaxLength = 1000
   # 100MB

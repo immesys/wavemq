@@ -350,6 +350,13 @@ func (t *Terminus) bgTasks() {
 	for {
 		time.Sleep(5 * time.Second)
 		t.rstree_lock.RLock()
+		toremove := []ID{}
+		for subid, stn := range t.rstree {
+			s := stn.v.Load().(subTreeNodeValue).subz[subid]
+			if s.q.Ctx.Err() != nil {
+				toremove = append(toremove, subid)
+			}
+		}
 		if len(t.rstree) > 0 {
 			fmt.Printf("Active subscriptions:\n")
 			fmt.Printf("  AGE   URI\n")
@@ -363,6 +370,9 @@ func (t *Terminus) bgTasks() {
 			fmt.Printf("No active subscriptions\n")
 		}
 		t.rstree_lock.RUnlock()
+		for _, r := range toremove {
+			t.unsubscribeInternalID(r)
+		}
 	}
 }
 
@@ -405,6 +415,15 @@ func (t *Terminus) downstreamClient(namespace string) (*downstreamConnection, er
 }
 
 func (t *Terminus) beginDownstreamPeering(q *Queue) {
+	//Double check this is a registered peer namespace. If we are the DR
+	//or the namespace is unconfigured, then we just do local delivery
+	ns := base64.URLEncoding.EncodeToString(q.GetSubRequest().Tbs.Namespace)
+	_, ok := t.namespaces[ns]
+	if !ok {
+		fmt.Printf("not peering for namespace %q\n", ns)
+		return
+	}
+
 	//We need to know which address to dial.
 	for {
 		//This way when we unsubscribe this downstream peering will die too

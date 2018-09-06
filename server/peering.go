@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
@@ -82,11 +83,16 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 		Notify: notify,
 	})
 	notify <- struct{}{} //Run through once
+	//Dequeueing resets the un-drained queue timer. We need to call dequeue
+	//every now and then even if there is no data
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-notify:
 		case <-r.Context().Done():
 		case <-q.Ctx.Done():
+		case <-ticker.C:
 		}
 		if q.Ctx.Err() != nil {
 			r.Send(&pb.SubscriptionMessage{

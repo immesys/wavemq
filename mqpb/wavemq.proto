@@ -38,6 +38,10 @@ message PeerSubscriptionTBS {
   string id = 4;
   //This is the router that formed the subscription message
   string routerID = 5;
+  //How long should this queue last if not actively drained
+  //Should be > 1 minute to prevent disconnect of live queues
+  //This is in seconds
+  int64 expiry = 6;
 }
 
 message PeerSubscribeParams {
@@ -97,6 +101,10 @@ message SubscribeParams {
   //The unique identifier for the subscription. This enables you to resume
   //a previous subscription
   string identifier = 5;
+  //How long should this queue last if not actively drained
+  //Should be > 1 minute to prevent disconnect of live queues
+  //This is in seconds
+  int64 expiry = 6;
 }
 
 message SubscriptionMessage {

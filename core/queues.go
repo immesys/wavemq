@@ -201,7 +201,10 @@ func NewQManager(cfg *QManagerConfig) (*QManager, error) {
 }
 
 func (qm *QManager) Shutdown() {
-	//TODO flush all queues
+	qm.qzmu.Lock()
+	for _, q := range qm.qz {
+		q.Flush()
+	}
 	qm.ctxcancel()
 	err := qm.db.Close()
 	if err != nil {
@@ -281,6 +284,7 @@ func (qm *QManager) recover() error {
 				ctxcancel: cancel,
 			}
 			if q.expired() {
+				q.ctxcancel()
 				q.remove()
 			} else {
 				qm.qz[hdr.ID] = q
@@ -351,11 +355,18 @@ func (qm *QManager) bgTasks() {
 			if qm.ctx.Err() != nil {
 				return
 			}
-			if q.expired() {
+			//We want to cancel the context for any timed out queues. This causes
+			//an unsub in terminus
+			if !q.GetIsPeerUpstream() && q.expired() {
 				toremove = append(toremove, q.hdr.ID)
+				q.ctxcancel()
 				q.remove()
 				continue
 			}
+
+			//GC the entries in the DB if they have been processed
+			q.GC()
+
 			//Write out a new header. Flush will also do this, but for an active
 			//queue, the flush might not trigger below
 			q.mu.Lock()
@@ -365,16 +376,23 @@ func (qm *QManager) bgTasks() {
 					panic(err)
 				}
 			}
-			q.mu.Unlock()
 
+			//There are a couple reasons we might want to flush. We don't
+			//want to do it on an active queue for no reason though
 			if nw.Sub(q.lastDequeue) > IdleFlushTime ||
 				q.uncommittedSize > IdleFlushSize {
+				q.mu.Unlock()
 				//Move uncommited entries to committed
 				err := q.Flush()
 				if err != nil {
 					panic(err)
 				}
+			} else {
+				q.mu.Unlock()
 			}
+		}
+		for _, q := range toremove {
+			delete(qm.qz, q)
 		}
 	}
 }
@@ -595,88 +613,16 @@ func (q *Queue) ck() {
 	}
 }
 
-//Flush does three things:
-// Move items from uncommitted to committed, writing them to the database
-// Remove GC'd items from the database
-// Write out the header if it has changed
-func (q *Queue) Flush() error {
-	//We release the q mu quite early, so we hold the flushmu to prevent
-	//accidentally flushing concurrently
-	q.flushmu.Lock()
-	defer q.flushmu.Unlock()
-
+func (q *Queue) GC() error {
 	q.mu.Lock()
-	//Flush the header if it has changed
-	if q.hdrChanged {
-		q.writeHeader()
-	}
-	//Should we be writing the queue out to DB?
-	syncQueue := q.uncommitedHead != nil
-	//Keep a local copy of the GC list
 	togc := q.togc
 	q.togc = []string{}
-	//local copies of uc pointers
-	ucHead := q.uncommitedHead
-	ucTail := q.uncommitedTail
-	if syncQueue {
-		if q.head == nil {
-			fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
-			q.head = ucHead
-			q.tail = ucTail
-		} else {
-			fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
-			q.tail.Next = ucHead
-			q.tail = ucTail
-		}
-		q.size += q.uncommittedSize
-		q.length += q.uncommittedLength
-		q.uncommittedSize = 0
-		q.uncommittedLength = 0
-		q.uncommitedHead = nil
-		q.uncommitedTail = nil
-		q.ck()
-	}
 	q.mu.Unlock()
-
-	//Is there something to be done?
-	if !syncQueue && len(togc) == 0 {
+	if len(togc) == 0 {
 		return nil
 	}
-
-	//While dequeue might modify q.head it won't modify the pointers within
-	//the elements, so there is no danger of the list being corrupted while
-	//we walk it here. The only danger is that another flush modifies
-	//the Next pointer of the tail, so we hold flushmu to prevent that
 	txn := q.mgr.db.NewTransaction(true)
-	if syncQueue {
-		//Be prepared to break the transaction into smaller ones
-	bulkflush:
-		for {
-			it := ucHead
-			for it != nil {
-				nextit := it.Next
-				bin, err := proto.Marshal(it.Content)
-				if err != nil {
-					panic(err)
-				}
-				err = txn.Set([]byte(keyQueueItem(q.hdr.ID, it.Index)), bin)
-				if err == badger.ErrTxnTooBig {
-					err := txn.Commit(nil)
-					if err != nil {
-						return err
-					}
-					txn = q.mgr.db.NewTransaction(true)
-					continue bulkflush
-				} else if err != nil {
-					return err
-				}
-				it = nextit
-			}
-			break
-		}
-	}
 	for _, e := range togc {
-		fmt.Printf("GC %q\n", e)
 		err := txn.Delete([]byte(e))
 		if err == badger.ErrTxnTooBig {
 			err := txn.Commit(nil)
@@ -692,8 +638,86 @@ func (q *Queue) Flush() error {
 			return err
 		}
 	}
-	txn.Commit(nil)
-	return nil
+	return txn.Commit(nil)
+}
+
+//Flush does three things:
+// Move items from uncommitted to committed, writing them to the database
+// Remove GC'd items from the database
+// Write out the header if it has changed
+func (q *Queue) Flush() error {
+	//We release the q mu quite early, so we hold the flushmu to prevent
+	//accidentally flushing concurrently
+	q.flushmu.Lock()
+	defer q.flushmu.Unlock()
+
+	q.mu.Lock()
+	//Flush the header if it has changed
+	if q.hdrChanged {
+		q.writeHeader()
+	}
+
+	//Is there something to be done?
+	if q.uncommitedHead == nil {
+		q.mu.Unlock()
+		return nil
+	}
+
+	//local copies of uc pointers
+	ucHead := q.uncommitedHead
+	ucTail := q.uncommitedTail
+
+	if q.head == nil {
+		fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
+		q.head = ucHead
+		q.tail = ucTail
+	} else {
+		fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
+		q.tail.Next = ucHead
+		q.tail = ucTail
+	}
+	q.size += q.uncommittedSize
+	q.length += q.uncommittedLength
+	q.uncommittedSize = 0
+	q.uncommittedLength = 0
+	q.uncommitedHead = nil
+	q.uncommitedTail = nil
+
+	q.mu.Unlock()
+
+	//While dequeue might modify q.head it won't modify the pointers within
+	//the elements, so there is no danger of the list being corrupted while
+	//we walk it here. The only danger is that another flush modifies
+	//the Next pointer of the tail, so we hold flushmu to prevent that
+	txn := q.mgr.db.NewTransaction(true)
+
+	//Be prepared to break the transaction into smaller ones
+bulkflush:
+	for {
+		it := ucHead
+		for it != nil {
+			nextit := it.Next
+			bin, err := proto.Marshal(it.Content)
+			if err != nil {
+				panic(err)
+			}
+			err = txn.Set([]byte(keyQueueItem(q.hdr.ID, it.Index)), bin)
+			if err == badger.ErrTxnTooBig {
+				err := txn.Commit(nil)
+				if err != nil {
+					return err
+				}
+				txn = q.mgr.db.NewTransaction(true)
+				continue bulkflush
+			} else if err != nil {
+				return err
+			}
+			it = nextit
+		}
+		break
+	}
+
+	return txn.Commit(nil)
 }
 
 func (q *Queue) Destroy() {
@@ -782,6 +806,24 @@ func (q *Queue) reset() error {
 	return nil
 }
 
+func (q *Queue) newExpiry() int64 {
+	//upstream peer queues don't expire
+	if q.hdr.PeerUpstream {
+		return 0
+	}
+	//Work out the min of the allowed expiry vs user requested expiry
+	nw := time.Now()
+	userWants := nw.Add(time.Duration(q.hdr.SubRequest.Tbs.Expiry * 1e9))
+	max := nw.Add(time.Duration(q.mgr.cfg.QueueExpiry * 1e9))
+
+	aNano := userWants.UnixNano()
+	bNano := max.UnixNano()
+	if aNano > bNano {
+		return bNano
+	}
+	return aNano
+}
+
 //Enqueue directly into the committed queue, only used for on-startup recovery
 func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
 	q.ck()
@@ -807,7 +849,7 @@ func (q *Queue) dequeue() *pb.Message {
 	q.ck()
 	defer q.ck()
 	nw := time.Now()
-	q.hdr.Expires = nw.Add(time.Duration(q.mgr.cfg.QueueExpiry * 1e9)).UnixNano()
+	q.hdr.Expires = q.newExpiry()
 	q.hdrChanged = true
 	q.lastDequeue = nw
 	if q.head != nil {
@@ -820,7 +862,6 @@ func (q *Queue) dequeue() *pb.Message {
 		} else {
 			q.head = q.head.Next
 		}
-		fmt.Printf("appending to gc\n")
 		q.togc = append(q.togc, keyQueueItem(q.hdr.ID, it.Index))
 		q.size -= int64(proto.Size(it.Content))
 		q.length--
@@ -831,7 +872,6 @@ func (q *Queue) dequeue() *pb.Message {
 	if it == nil {
 		return nil
 	}
-	fmt.Printf("dequeue uc\n")
 	q.uncommitedHead = q.uncommitedHead.Next
 	if q.uncommitedHead == nil {
 		q.uncommitedTail = nil

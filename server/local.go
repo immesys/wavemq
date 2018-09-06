@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
@@ -116,17 +117,20 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 		return nil
 	}
 	notify := make(chan struct{}, 5)
-	notify <- struct{}{}
 	q.SubscribeNotifications(&core.NotificationSubscriber{
 		Notify: notify,
 		//When this client disconnects, stop receiving these notifications
 		Ctx: r.Context(),
 	})
+	notify <- struct{}{} //Run through once
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-notify:
 		case <-r.Context().Done():
 		case <-q.Ctx.Done():
+		case <-ticker.C:
 		}
 		if q.Ctx.Err() != nil {
 			r.Send(&pb.SubscriptionMessage{

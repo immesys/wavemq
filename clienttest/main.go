@@ -15,7 +15,7 @@ import (
 //change publish namespace to string
 func main() {
 	go clienta()
-	//go clientb()
+	go clientb()
 	time.Sleep(1 * time.Second)
 	conn, err := grpc.Dial("127.0.0.1:7012", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
@@ -79,6 +79,6 @@ func clientb() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("CLIENT A: %v\n", sm.Message.Tbs.Uri)
+		fmt.Printf("CLIENT B: %v\n", sm.Message.Tbs.Uri)
 	}
 }
