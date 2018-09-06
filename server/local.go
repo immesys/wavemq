@@ -90,7 +90,7 @@ func NewLocalServer(tm *core.Terminus, am *core.AuthModule, cfg *LocalServerConf
 }
 
 func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResponse, error) {
-	m, err := s.am.FormMessage(p)
+	m, err := s.am.FormMessage(p, s.tm.RouterID())
 	if err != nil {
 		return &pb.PublishResponse{
 			Error: ToError(err),
@@ -101,7 +101,7 @@ func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResp
 }
 
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
-	sub, err := s.am.FormSubRequest(p)
+	sub, err := s.am.FormSubRequest(p, s.tm.RouterID())
 	if err != nil {
 		r.Send(&pb.SubscriptionMessage{
 			Error: ToError(err),
@@ -116,10 +116,9 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 		return nil
 	}
 	notify := make(chan struct{}, 5)
+	notify <- struct{}{}
 	q.SubscribeNotifications(&core.NotificationSubscriber{
-		Notify: func() {
-			notify <- struct{}{}
-		},
+		Notify: notify,
 		//When this client disconnects, stop receiving these notifications
 		Ctx: r.Context(),
 	})
@@ -147,12 +146,15 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			if err != nil {
 				fmt.Printf("dropping message due to invalid proof\n")
 			} else {
-				r.Send(&pb.SubscriptionMessage{
+				fmt.Printf("sending\n")
+				err := r.Send(&pb.SubscriptionMessage{
 					Message: it,
 				})
+				if err != nil {
+					return err
+				}
 			}
 		}
-
 	}
 }
 

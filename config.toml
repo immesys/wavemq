@@ -1,0 +1,40 @@
+[WaveConfig]
+  database = "./data/wave"
+  listenIp = "127.0.0.1:7002"
+
+  [WaveConfig.storage]
+    # This is the default HTTPS server
+    [WaveConfig.storage.default]
+    provider = "http_v1"
+    url = "https://standalone.storage.bwave.io/v1"
+    version = "1"
+
+[QueueConfig]
+  queueDataStore = "./data/queue"
+  # This is one day in seconds
+  queueExpiry = 86400
+  # 1000 items
+  subscriptionQueueMaxLength = 1000
+  # 100MB
+  subscriptionQueueMaxSize = 100
+  # 10k items
+  trunkingQueueMaxLength = 10000
+  # 1GB
+  trunkingQueueMaxSize = 1000
+  # 30 seconds
+  flushInterval = 30
+
+[LocalConfig]
+  listenAddr = "127.0.0.1:7002"
+
+[PeerConfig]
+  listenAddr = "127.0.0.1:7003"
+
+[RoutingConfig]
+PersistDataStore = "./data/persist"
+
+[[RoutingConfig.Router]]
+  Namespace = "GyBzLKTkBE4a7tPqGjHMQ_VDgqSQRSVafAyUYcURg5scAg=="
+  EntityHash = "GyCbc47T64y2mcEP3cOM0ZRCOU_y2K-VnUhXTX-sn0cuTw=="
+  EntityLocation = "default"
+  Address = "127.0.0.1:7001"

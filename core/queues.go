@@ -90,18 +90,21 @@ type Queue struct {
 	ctxcancel context.CancelFunc
 }
 
+//TODO change qmanager config to use seconds and KB instead of nano and bytes
+
 //The configuration governing queues
 type QManagerConfig struct {
 	QueueDataStore string
-	//Nanoseconds
+	//Seconds
 	QueueExpiry int64
 
+	//MB
 	SubscriptionQueueMaxLength int64
 	SubscriptionQueueMaxSize   int64
 	TrunkingQueueMaxLength     int64
 	TrunkingQueueMaxSize       int64
 
-	//Nanoseconds between to-disk flushes
+	//Seconds between to-disk flushes
 	FlushInterval int64
 }
 
@@ -118,10 +121,16 @@ type QueueHeader struct {
 	Created time.Time
 
 	//Used to ensure resubscriptions are done by the same entity
-	SubRequest *pb.PeerSubscription
+	SubRequest *pb.PeerSubscribeParams
 
 	//Used for rebuilding the subscription mux from queues
-	Subscription string
+	//Subscription string
+
+	//Used for ensuring we don't form routing loops
+	RecipientID string
+
+	//Is this queue used for uploading local publish to a peer
+	PeerUpstream bool
 }
 
 type Iterator struct {
@@ -129,7 +138,7 @@ type Iterator struct {
 }
 
 type NotificationSubscriber struct {
-	Notify func()
+	Notify chan struct{}
 	Ctx    context.Context
 }
 
@@ -180,6 +189,7 @@ func NewQManager(cfg *QManagerConfig) (*QManager, error) {
 		qz:        make(map[ID]*Queue),
 		ctx:       ctx,
 		ctxcancel: cancel,
+		cfg:       *cfg,
 	}
 	err = rv.recover()
 	if err != nil {
@@ -191,6 +201,7 @@ func NewQManager(cfg *QManagerConfig) (*QManager, error) {
 }
 
 func (qm *QManager) Shutdown() {
+	//TODO flush all queues
 	qm.ctxcancel()
 	err := qm.db.Close()
 	if err != nil {
@@ -226,7 +237,7 @@ func (qm *QManager) NewQ(id ID) (*Queue, error) {
 		hdr: &QueueHeader{
 			ID:        id,
 			MaxLength: qm.cfg.SubscriptionQueueMaxLength,
-			MaxSize:   qm.cfg.SubscriptionQueueMaxSize,
+			MaxSize:   qm.cfg.SubscriptionQueueMaxSize * 1024 * 1024,
 		},
 		mgr: qm,
 	}
@@ -262,11 +273,13 @@ func (qm *QManager) recover() error {
 			if err != nil {
 				return err
 			}
+			ctx, cancel := context.WithCancel(context.Background())
 			q := &Queue{
-				hdr: hdr,
-				mgr: qm,
+				hdr:       hdr,
+				mgr:       qm,
+				Ctx:       ctx,
+				ctxcancel: cancel,
 			}
-			q.reset()
 			if q.expired() {
 				q.remove()
 			} else {
@@ -275,6 +288,7 @@ func (qm *QManager) recover() error {
 		}
 
 		for _, q := range qm.qz {
+			var largest int64
 			qprefix := []byte(keyQueuePrefix(q.hdr.ID))
 			for it.Seek(qprefix); it.ValidForPrefix(qprefix); it.Next() {
 				k := it.Item().Key()
@@ -282,6 +296,9 @@ func (qm *QManager) recover() error {
 				index, err := strconv.ParseInt(string(indexString), 10, 64)
 				if err != nil {
 					return err
+				}
+				if index > largest {
+					largest = index
 				}
 				v, err := it.Item().Value()
 				if err != nil {
@@ -294,10 +311,12 @@ func (qm *QManager) recover() error {
 				}
 				q.enqueueCommitted(index, m)
 			}
+			q.hdr.Index = largest + 1
+			q.WriteHeader()
 		}
 
 		for _, q := range qm.qz {
-			fmt.Printf("recovered queue %s (size=%d)\n", q.ID(), q.size)
+			fmt.Printf("recovered queue %s (length=%d)\n", q.ID(), q.length)
 		}
 
 		return nil
@@ -308,7 +327,7 @@ func (qm *QManager) recover() error {
 func (qm *QManager) bgTasks() {
 	last := time.Now()
 	for {
-		last.Add(time.Duration(qm.cfg.FlushInterval))
+		last = last.Add(time.Duration(qm.cfg.FlushInterval * 1e9))
 		toSleep := last.Sub(time.Now())
 		if toSleep > 0 {
 			time.Sleep(toSleep)
@@ -378,48 +397,74 @@ func (q *Queue) Header() *QueueHeader {
 	return q.hdr
 }
 
-func (q *Queue) SetSubRequest(r *pb.PeerSubscription) {
+func (q *Queue) SetSubRequest(r *pb.PeerSubscribeParams) {
 	q.mu.Lock()
 	q.hdr.SubRequest = r
 	q.hdrChanged = true
 	q.mu.Unlock()
 }
 
-func (q *Queue) GetSubRequest() *pb.PeerSubscription {
+func (q *Queue) GetSubRequest() *pb.PeerSubscribeParams {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	return q.hdr.SubRequest
 }
 
-func (q *Queue) SetSubscription(s string) {
+func (q *Queue) SetRecipientID(s string) {
 	q.mu.Lock()
-	q.hdr.Subscription = s
+	q.hdr.RecipientID = s
 	q.hdrChanged = true
 	q.mu.Unlock()
 }
-func (q *Queue) GetSubscription() string {
+
+func (q *Queue) GetRecipientID() string {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	return q.hdr.Subscription
+	return q.hdr.RecipientID
 }
+
+func (q *Queue) SetIsPeerUpstream(b bool) {
+	q.mu.Lock()
+	q.hdr.PeerUpstream = b
+	q.hdrChanged = true
+	q.mu.Unlock()
+}
+
+func (q *Queue) GetIsPeerUpstream() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.hdr.PeerUpstream
+}
+
+// func (q *Queue) SetSubscription(s string) {
+// 	q.mu.Lock()
+// 	q.hdr.Subscription = s
+// 	q.hdrChanged = true
+// 	q.mu.Unlock()
+// }
+// func (q *Queue) GetSubscription() string {
+// 	q.mu.Lock()
+// 	defer q.mu.Unlock()
+// 	return q.hdr.Subscription
+// }
 func (q *Queue) notifyAndDropLock() {
 	cpidx := 0
 	//Process the notifications but also compact them, removing
 	//ones where the context is expired
-	tonotify := make([]func(), 0, len(q.notifications))
 	for _, e := range q.notifications {
 		if e.Ctx.Err() != nil {
 			continue
 		}
-		tonotify = append(tonotify, e.Notify)
+		//If the given queue is full, it's ok to drop a notification
+		select {
+		case e.Notify <- struct{}{}:
+		default:
+		}
 		q.notifications[cpidx] = e
 		cpidx++
 	}
 	q.notifications = q.notifications[:cpidx]
 	q.mu.Unlock()
-	for _, f := range tonotify {
-		f()
-	}
 }
 
 //Set the queue maximums to the configured defaults for
@@ -428,10 +473,10 @@ func (q *Queue) SetTrunking(v bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if v {
-		q.hdr.MaxSize = q.mgr.cfg.TrunkingQueueMaxSize
+		q.hdr.MaxSize = q.mgr.cfg.TrunkingQueueMaxSize * 1024 * 1024
 		q.hdr.MaxLength = q.mgr.cfg.TrunkingQueueMaxLength
 	} else {
-		q.hdr.MaxSize = q.mgr.cfg.SubscriptionQueueMaxSize
+		q.hdr.MaxSize = q.mgr.cfg.SubscriptionQueueMaxSize * 1024 * 1024
 		q.hdr.MaxLength = q.mgr.cfg.SubscriptionQueueMaxLength
 	}
 	q.hdrChanged = true
@@ -440,6 +485,10 @@ func (q *Queue) SetTrunking(v bool) {
 
 //Add an element to the queue, dropping old records as required
 func (q *Queue) Enqueue(m *pb.Message) error {
+	q.ck()
+	defer q.ck()
+	fmt.Printf("start of enq %p %p\n", q.uncommitedHead, q.uncommitedTail)
+	defer func() { fmt.Printf("end of enq %p %p\n", q.uncommitedHead, q.uncommitedTail) }()
 	sz := proto.Size(m)
 	q.mu.Lock()
 
@@ -447,6 +496,9 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 	for {
 		if ((q.uncommittedSize + q.size) > 0) && ((q.uncommittedSize+q.size+int64(sz) > q.hdr.MaxSize) ||
 			(q.uncommittedLength+q.length+1 > q.hdr.MaxLength)) {
+			fmt.Printf("dropping message: %d\n", sz)
+			fmt.Printf("sizes: %d %d %d %d\n", q.uncommittedSize, q.size+q.uncommittedLength+q.length)
+			fmt.Printf("maxes: %d %d\n", q.hdr.MaxSize, q.hdr.MaxLength)
 			q.dequeue()
 			q.drops++
 			continue
@@ -483,6 +535,15 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 	return nil
 }
 
+//Return the remaining space in the queue
+func (q *Queue) Remaining() (size int64, length int64) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	rsize := q.hdr.MaxSize - q.size - q.uncommittedSize
+	rlen := q.hdr.MaxLength - q.length - q.uncommittedLength
+	return rsize, rlen
+}
+
 //Like Dequeue but the element is not removed from the queue
 func (q *Queue) Peek() *pb.Message {
 	q.mu.Lock()
@@ -515,20 +576,46 @@ func (q *Queue) WriteHeader() error {
 	return q.writeHeader()
 }
 
+func (q *Queue) ck() {
+	if q.uncommitedHead == nil && q.uncommitedTail != nil {
+		panic("nil ucHead with !nil uctail")
+	}
+	if q.uncommitedHead != nil && q.uncommitedTail == nil {
+		panic("nil ucTail with !nil ucHead")
+	}
+	if q.head == nil && q.tail != nil {
+		panic("nil head with !nil tail")
+	}
+	if q.head != nil && q.tail == nil {
+		panic("nil Tail with !nil Head")
+	}
+}
+
 //Move items from uncommitted to committed, writing them to the database
 func (q *Queue) Flush() error {
+	fmt.Printf("flush called\n")
+	q.ck()
+	defer q.ck()
+	q.WriteHeader()
 	//We release the q mu quite early, so we hold the flushmu to prevent
 	//accidentally flushing concurrently
 	q.flushmu.Lock()
 	defer q.flushmu.Unlock()
 
 	q.mu.Lock()
+	if q.uncommitedHead == nil {
+		q.mu.Unlock()
+		return nil
+	}
+	q.ck()
 	ucHead := q.uncommitedHead
 	ucTail := q.uncommitedTail
 	if q.head == nil {
+		fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
 		q.head = ucHead
 		q.tail = ucTail
 	} else {
+		fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
 		q.tail.Next = ucHead
 		q.tail = ucTail
 	}
@@ -538,6 +625,9 @@ func (q *Queue) Flush() error {
 	q.uncommittedLength = 0
 	q.uncommitedHead = nil
 	q.uncommitedTail = nil
+	q.ck()
+	togc := q.togc
+	q.togc = []string{}
 	q.mu.Unlock()
 
 	//While dequeue might modify q.head it won't modify the pointers within
@@ -561,6 +651,7 @@ bulkflush:
 				if err != nil {
 					return err
 				}
+				txn = q.mgr.db.NewTransaction(true)
 				continue bulkflush
 			} else if err != nil {
 				return err
@@ -569,6 +660,25 @@ bulkflush:
 		}
 		break
 	}
+	for _, e := range togc {
+		fmt.Printf("GC %q\n", e)
+		err := txn.Delete([]byte(e))
+		if err == badger.ErrTxnTooBig {
+			err := txn.Commit(nil)
+			if err != nil {
+				return err
+			}
+			txn = q.mgr.db.NewTransaction(true)
+			err = txn.Delete([]byte(e))
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+	txn.Commit(nil)
+
 	return nil
 }
 
@@ -593,6 +703,7 @@ func (q *Queue) remove() error {
 	//Remove the header
 	hdrprefix := []byte(keyHeader(q.hdr.ID))
 	q.mgr.db.Update(func(txn *badger.Txn) error {
+		fmt.Printf("deleting key %q\n", hdrprefix)
 		txn.Delete(hdrprefix)
 		return nil
 	})
@@ -607,6 +718,7 @@ bulkerase:
 		it := txn.NewIterator(opts)
 		prefix := []byte(keyQueuePrefix(q.hdr.ID))
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			fmt.Printf("doing delete: %q\n", it.Item().Key())
 			err := txn.Delete(it.Item().Key())
 			if err == badger.ErrTxnTooBig {
 				it.Close()
@@ -638,7 +750,7 @@ func (q *Queue) reset() error {
 	q.remove()
 	//Reset the data structure
 	qh := &QueueHeader{
-		Expires:   time.Now().Add(time.Duration(q.mgr.cfg.QueueExpiry)).UnixNano(),
+		Expires:   time.Now().Add(time.Duration(q.mgr.cfg.QueueExpiry * 1e9)).UnixNano(),
 		Index:     0,
 		ID:        q.hdr.ID,
 		Created:   time.Now(),
@@ -658,6 +770,8 @@ func (q *Queue) reset() error {
 
 //Enqueue directly into the committed queue, only used for on-startup recovery
 func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
+	q.ck()
+	defer q.ck()
 	it := &Item{
 		Content: m,
 	}
@@ -676,8 +790,10 @@ func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
 
 //Internal dequeue, mutex must be held
 func (q *Queue) dequeue() *pb.Message {
+	q.ck()
+	defer q.ck()
 	nw := time.Now()
-	q.hdr.Expires = nw.Add(time.Duration(q.mgr.cfg.QueueExpiry)).UnixNano()
+	q.hdr.Expires = nw.Add(time.Duration(q.mgr.cfg.QueueExpiry * 1e9)).UnixNano()
 	q.hdrChanged = true
 	q.lastDequeue = nw
 	if q.head != nil {
@@ -690,15 +806,18 @@ func (q *Queue) dequeue() *pb.Message {
 		} else {
 			q.head = q.head.Next
 		}
+		fmt.Printf("appending to gc\n")
 		q.togc = append(q.togc, keyQueueItem(q.hdr.ID, it.Index))
 		q.size -= int64(proto.Size(it.Content))
 		q.length--
 		return it.Content
 	}
+
 	it := q.uncommitedHead
 	if it == nil {
 		return nil
 	}
+	fmt.Printf("dequeue uc\n")
 	q.uncommitedHead = q.uncommitedHead.Next
 	if q.uncommitedHead == nil {
 		q.uncommitedTail = nil
@@ -728,7 +847,7 @@ func (i *Iterator) Value() *pb.Message {
 
 //The DB key prefix for a queue
 func keyQueuePrefix(id ID) string {
-	return "q/" + string(id)
+	return "q/" + string(id) + "/"
 }
 
 //The DB key for a header

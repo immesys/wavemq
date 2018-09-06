@@ -41,13 +41,13 @@ func getqm(t testing.TB) *core.QManager {
 	require.NoError(t, err)
 	return rv
 }
-func gettm(t testing.TB, qm *core.QManager) *core.Terminus {
+func gettm(t testing.TB, qm *core.QManager, am *core.AuthModule) *core.Terminus {
 	td, err := ioutil.TempDir("/tmp", "mq_tm")
 	require.NoError(t, err)
 	cfg := &core.RoutingConfig{
 		PersistDataStore: td,
 	}
-	rv, err := core.NewTerminus(qm, cfg)
+	rv, err := core.NewTerminus(qm, am, cfg)
 	require.NoError(t, err)
 	return rv
 }

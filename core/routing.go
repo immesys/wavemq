@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -9,8 +10,10 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
+	"github.com/immesys/wave/wve"
 	pb "github.com/immesys/wavemq/mqpb"
 	"golang.org/x/crypto/sha3"
+	"google.golang.org/grpc"
 )
 
 type ID string
@@ -30,11 +33,20 @@ type subTreeNodeValue struct {
 	subz     map[ID]*subscription
 }
 
+//There are two types of queues:
+//Upstream queues and normal queues
+//An upstream queue has the condition that you only deliver local messages
+//to it. The queue is drained by the DR
+//A normal queue is drained by a local connection or by a peer subscription
+//and is published into by either local connections or peer downlink
+
 type Terminus struct {
 	//The subscription tree
 	stree *subTreeNode
-	//The queue manager
+
+	//Other modules of the system
 	qm *QManager
+	am *AuthModule
 
 	//map a subscription ID onto the snode that contains it
 	rstree_lock sync.RWMutex
@@ -45,27 +57,99 @@ type Terminus struct {
 
 	//The database used for storing persisted messages
 	db *badger.DB
+
+	//The supported namespaces
+	namespaces map[string]*DesignatedRouter
+
+	downlinkConns  map[string]*downstreamConnection
+	downlinkConnMu sync.Mutex
+
+	//Our router id. TODO: should persist across resets
+	ourNodeId string
 }
 
+type downstreamConnection struct {
+	Conn   *grpc.ClientConn
+	Ctx    context.Context
+	Cancel context.CancelFunc
+}
+
+type DesignatedRouter struct {
+	Namespace      string
+	EntityHash     string
+	EntityLocation string
+	Address        string
+}
 type RoutingConfig struct {
 	//Where persisted messages get stored
 	PersistDataStore string
+	//Designated Routers
+	Router []DesignatedRouter
 }
 
-func NewTerminus(qm *QManager, cfg *RoutingConfig) (*Terminus, error) {
+func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, error) {
 	rv := &Terminus{
-		stree:  newSnode(),
-		rstree: make(map[ID]*subTreeNode),
-		qm:     qm,
-		cfg:    cfg,
+		stree:         newSnode(),
+		rstree:        make(map[ID]*subTreeNode),
+		qm:            qm,
+		am:            am,
+		cfg:           cfg,
+		downlinkConns: make(map[string]*downstreamConnection),
 	}
+
+	rv.namespaces = make(map[string]*DesignatedRouter)
+	for _, r := range cfg.Router {
+		dr := r
+		rv.namespaces[r.Namespace] = &dr
+	}
+
+	//Have we already created the queue
+	foundRouters := make(map[string]ID)
 	//Restore all the subscriptions present from prior queues
 	for _, id := range qm.AllQueueIDs() {
 		q, err := qm.GetQ(id)
 		if err != nil {
 			panic(err)
 		}
-		uri := q.GetSubscription()
+		sub := &subscription{
+			subid:   id,
+			q:       q,
+			created: time.Now(),
+		}
+		if q.GetIsPeerUpstream() {
+			_, ok := rv.namespaces[q.GetRecipientID()]
+			if !ok {
+				//This is a router that was removed
+				q.Destroy()
+				continue
+			}
+			foundRouters[q.GetRecipientID()] = id
+			sub.uri = q.GetRecipientID() + "/*"
+		} else {
+			subreq := q.GetSubRequest()
+			uri := base64.URLEncoding.EncodeToString(subreq.Tbs.Namespace) + "/" + subreq.Tbs.Uri
+			sub.uri = uri
+		}
+		rv.addSub(sub.uri, sub)
+	}
+
+	//Create queues for new router connections
+	for ns, _ := range rv.namespaces {
+		_, ok := foundRouters[ns]
+		if ok {
+			continue
+		}
+		fmt.Printf("Creating new peer routing queue for %s\n", ns)
+		id := ID("upstream-" + ns)
+		q, err := qm.GetQ(id)
+		if err != nil {
+			panic(err)
+		}
+		uri := ns + "/*"
+		q.SetIsPeerUpstream(true)
+		q.SetTrunking(true)
+		q.SetRecipientID(ns)
+		q.Flush()
 		sub := &subscription{
 			subid:   id,
 			q:       q,
@@ -74,6 +158,19 @@ func NewTerminus(qm *QManager, cfg *RoutingConfig) (*Terminus, error) {
 		}
 		rv.addSub(uri, sub)
 	}
+
+	//Create upstream daemons for every router
+	for _, dr := range rv.namespaces {
+		q, err := qm.GetQ(ID("upstream-" + dr.Namespace))
+		if err != nil {
+			panic(err)
+		}
+		go rv.beginUpstreamPeering(q, dr)
+	}
+
+	//ID
+	// "" -> local
+	// "something"
 
 	//Open the database
 	opts := badger.DefaultOptions
@@ -85,9 +182,15 @@ func NewTerminus(qm *QManager, cfg *RoutingConfig) (*Terminus, error) {
 	}
 	rv.db = db
 
+	rv.ourNodeId = rv.LoadID()
+
 	//Run the BG tasks
 	go rv.bgTasks()
 	return rv, nil
+}
+
+func (t *Terminus) RouterID() string {
+	return t.ourNodeId
 }
 
 func (t *Terminus) Publish(m *pb.Message) {
@@ -95,7 +198,23 @@ func (t *Terminus) Publish(m *pb.Message) {
 	var clientlist []*subscription
 	fullUri := base64.URLEncoding.EncodeToString(m.Tbs.Namespace) + "/" + m.Tbs.Uri
 	t.rMatchSubs(fullUri, func(s *subscription) {
-		fmt.Printf("publish matched sub\n")
+		if s.q.GetIsPeerUpstream() {
+			//We only deliver local messages
+			if m.Tbs.OriginRouter != t.ourNodeId {
+				//This came from upstream, don't send it back on upstream
+				return
+			}
+		} else {
+			if s.q.GetRecipientID() == m.Tbs.OriginRouter {
+				if s.q.GetRecipientID() == "" {
+					panic(string(s.q.ID()))
+				}
+				//This queue goes to the same node that issued the message
+				//don't loop
+				return
+			}
+		}
+
 		clientlist = append(clientlist, s)
 	})
 
@@ -105,19 +224,25 @@ func (t *Terminus) Publish(m *pb.Message) {
 	//a week
 	for _, sub := range clientlist {
 		if sub.q.Ctx.Err() != nil {
-			t.Unsubscribe(sub.subid)
+			t.unsubscribeInternalID(sub.subid)
 		} else {
 			sub.q.Enqueue(m)
+			fmt.Printf("post enq length=%d (%p)\n", sub.q.length+sub.q.uncommittedLength, sub.q)
 		}
 	}
 }
 
-func (t *Terminus) Unsubscribe(subid ID) error {
+func (t *Terminus) Unsubscribe(entity []byte, subid string) wve.WVE {
+	realid := toSubID(entity, subid)
+	return t.unsubscribeInternalID(realid)
+}
+
+func (t *Terminus) unsubscribeInternalID(subid ID) wve.WVE {
 	t.rstree_lock.Lock()
 	node, ok := t.rstree[subid]
 	if !ok {
 		t.rstree_lock.Unlock()
-		return fmt.Errorf("no such subscription exists")
+		return wve.Err(NoSuchSubscription, "no such subscription exists")
 	}
 	toTerm := []*subscription{}
 
@@ -147,7 +272,7 @@ func toSubID(entityHash []byte, subid string) ID {
 
 //This is the real function to call for creating a subscription or resuming an existing one
 //the URI must already have the namespace in front
-func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
+func (t *Terminus) CreateSubscription(ps *pb.PeerSubscribeParams) (*Queue, wve.WVE) {
 	fulluri := base64.URLEncoding.EncodeToString(ps.Tbs.Namespace) + "/" + ps.Tbs.Uri
 	subid := toSubID(ps.Tbs.SourceEntity, ps.Tbs.Id)
 
@@ -162,16 +287,25 @@ func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
 		sub := nv.subz[subid]
 		//In case the proof has changed
 		sub.q.SetSubRequest(ps)
+		sub.q.Flush()
 		return sub.q, nil
 	}
 
 	//Need to create a new subscription
 	q, err := t.qm.GetQ(subid)
 	if err != nil {
-		return nil, err
+		return nil, wve.ErrW(QueueError, "could not obtain queue", err)
 	}
-	q.SetSubscription(fulluri)
 	q.SetSubRequest(ps)
+	//If this is not a local delivery queue, set the recipient ID to enable
+	//filtering later
+	if ps.Tbs.RouterID != t.ourNodeId {
+		fmt.Printf("setting recipient ID\n")
+		q.SetRecipientID(ps.Tbs.RouterID)
+	} else {
+		fmt.Printf("not setting recipient ID\n")
+	}
+	q.Flush()
 	sub := &subscription{
 		subid:   subid,
 		q:       q,
@@ -186,6 +320,19 @@ func (t *Terminus) CreateSubscription(ps *pb.PeerSubscription) (*Queue, error) {
 func (tm *Terminus) addSub(topic string, s *subscription) {
 	//TODO this function also needs to create the subscription in the DR
 	//it has what it needs in s.q.GetSubRequest
+
+	if !s.q.GetIsPeerUpstream() {
+		//This could be local delivery or it could be a peer downstream
+		if s.q.GetRecipientID() == "" {
+			//This is a local delivery queue: we need to start an upstream
+			//peering connection
+			go tm.beginDownstreamPeering(s.q)
+		} else {
+			//We are a DR and this is a downlink queue to a lower tier router
+			//We don't have to do anything because the lower router is going to
+			//pull from us.
+		}
+	}
 	parts := strings.Split(topic, "/")
 	fmt.Println("Add subscription: ", parts)
 	node := tm.stree.addSub(parts, s)
@@ -216,6 +363,156 @@ func (t *Terminus) bgTasks() {
 			fmt.Printf("No active subscriptions\n")
 		}
 		t.rstree_lock.RUnlock()
+	}
+}
+
+func (t *Terminus) downstreamClient(namespace string) (*downstreamConnection, error) {
+	rtr := t.namespaces[namespace]
+	t.downlinkConnMu.Lock()
+	conn, ok := t.downlinkConns[namespace]
+	t.downlinkConnMu.Unlock()
+	if !ok || conn.Ctx.Err() != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		if rtr == nil {
+			panic(rtr)
+		}
+		nc, err := grpc.Dial(rtr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+		if err != nil {
+			return nil, err
+		}
+		//The above might have taken some time, double check nobody else opened a
+		//connection in the meantime
+		t.downlinkConnMu.Lock()
+		exconn, ok := t.downlinkConns[namespace]
+		if !ok || exconn.Ctx.Err() != nil {
+			//Set our one
+			conn = &downstreamConnection{
+				Ctx:    ctx,
+				Cancel: cancel,
+				Conn:   nc,
+			}
+			t.downlinkConns[namespace] = conn
+			t.downlinkConnMu.Unlock()
+		} else {
+			//Someone raced us to making a connection
+			nc.Close()
+			cancel()
+			t.downlinkConnMu.Unlock()
+			return exconn, nil
+		}
+	}
+	return conn, nil
+}
+
+func (t *Terminus) beginDownstreamPeering(q *Queue) {
+	//We need to know which address to dial.
+	for {
+		//This way when we unsubscribe this downstream peering will die too
+		ctx, cancel := context.WithCancel(q.Ctx)
+		err := t.downstreamPeer(ctx, q)
+		fmt.Printf("downstream peering error %v\n", err)
+		cancel()
+		if q.Ctx.Err() != nil {
+			//This queue is no more
+			return
+		}
+		time.Sleep(30 * time.Second)
+	}
+}
+func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
+	subreq := q.GetSubRequest()
+	ns := base64.URLEncoding.EncodeToString(subreq.Tbs.Namespace)
+	conn, err := t.downstreamClient(ns)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = e.(error)
+			conn.Conn.Close()
+			conn.Cancel()
+		}
+	}()
+	peer := pb.NewWAVEMQPeeringClient(conn.Conn)
+	sub, err := peer.PeerSubscribe(ctx, subreq)
+	if err != nil {
+		panic(err)
+	}
+	for {
+		if ctx.Err() != nil {
+			//The queue context is over. This is not a transient network error but rather
+			//the result of an unsubscribe or age-out. We need to inform our peer
+			peer.PeerUnsubscribe(conn.Ctx, &pb.PeerUnsubscribeParams{
+				SourceEntity: subreq.Tbs.SourceEntity,
+				Id:           subreq.Tbs.Id,
+			})
+			//If the above call fails, we rely on age-out upstream to clear the queue
+			return nil
+		}
+		msg, err := sub.Recv()
+		if err != nil {
+			panic(err)
+		}
+		q.Enqueue(msg.Message)
+	}
+}
+func (t *Terminus) beginUpstreamPeering(q *Queue, dr *DesignatedRouter) {
+	//TODO add transport credentials using auth manager
+	//Do TLS handshake with signature on the self-signed cert, ala BW2
+	for {
+		ctx, cancel := context.WithCancel(context.Background())
+		err := t.upstreamPeer(ctx, q, dr)
+		cancel()
+		fmt.Printf("error peering with %s (%s): %v\n", dr.Namespace, dr.Address, err)
+		time.Sleep(30 * time.Second)
+	}
+}
+
+func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRouter) (err error) {
+	conn, err := grpc.Dial(dr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+	if err != nil {
+		return err
+	}
+	//Ensure that we always close the connection upon some kind of failure
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = e.(error)
+		}
+		conn.Close()
+	}()
+	notify := make(chan struct{}, 5)
+	q.SubscribeNotifications(&NotificationSubscriber{
+		Ctx:    ctx,
+		Notify: notify,
+	})
+	peer := pb.NewWAVEMQPeeringClient(conn)
+	//TODO rather have a pool of workers that send frames to the peer, using
+	//the returned pool size as an indication of how much can be sent
+	// iterate -> workers x[ send across -> dequeue on complete ]
+	for {
+		for {
+			m := q.Dequeue()
+			if m == nil {
+				break
+			}
+			subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
+				Msg: m,
+			})
+			cancel()
+			if err != nil {
+				//Abort this connection and reconnect
+				panic(err)
+			}
+			if resp.Error != nil {
+				fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
+			}
+			//TODO use resp.sizes as mentioned above
+		}
+		//Wait until the queue is non empty
+		<-notify
 	}
 }
 

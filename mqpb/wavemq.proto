@@ -8,15 +8,39 @@ service WAVEMQ {
   rpc Publish(PublishParams) returns (PublishResponse);
   rpc Subscribe(SubscribeParams) returns (stream SubscriptionMessage);
 }
+service WAVEMQPeering {
+  rpc PeerPublish(PeerPublishParams) returns (PeerPublishResponse);
+  rpc PeerSubscribe(PeerSubscribeParams) returns (stream SubscriptionMessage);
+  rpc PeerUnsubscribe(PeerUnsubscribeParams) returns (PeerUnsubscribeResponse);
+}
 
+message PeerUnsubscribeParams {
+  bytes sourceEntity = 1;
+  string id = 2;
+}
+message PeerUnsubscribeResponse {
+  Error error = 1;
+}
+message PeerPublishParams {
+  Message msg = 1;
+}
+message PeerPublishResponse {
+  Error error = 1;
+  //The number of bytes free in the queue (after putting this message in)
+  int64 size = 2;
+  //The number of items free in the queue (after putting this message in)
+  int64 length = 3;
+}
 message PeerSubscriptionTBS {
   bytes sourceEntity = 1;
   bytes namespace = 2;
   string uri = 3;
   string id = 4;
+  //This is the router that formed the subscription message
+  string routerID = 5;
 }
 
-message PeerSubscription {
+message PeerSubscribeParams {
   PeerSubscriptionTBS tbs = 1;
   bytes signature = 2;
   bytes proofDER = 3;
@@ -44,6 +68,8 @@ message MessageTBS {
   bytes namespace = 3;
   string uri = 4;
   repeated PayloadObject payload = 5;
+  //The ID of the router/agent that formed this message
+  string originRouter = 6;
 }
 message Message {
   Proof proof = 1;
@@ -54,6 +80,7 @@ message Message {
   repeated int64 timestamps = 6;
   repeated int64 drops = 7;
   bool persist = 8;
+
 }
 message PayloadObject {
   string schema = 1;

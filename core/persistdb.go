@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger"
+	"github.com/pborman/uuid"
 )
 
 func interlaceURI(uri []string) []string {
@@ -65,6 +66,26 @@ func advancedUnInterlaceURI(rv []string, frontD []string, backD []string) []stri
 const cfMsgI = 1
 const cfMsg = 2
 
+func (t *Terminus) LoadID() (id string) {
+	err := t.db.Update(func(txn *badger.Txn) error {
+		key := []byte("routerid")
+		v, err := txn.Get(key)
+		if err == badger.ErrKeyNotFound {
+			id = uuid.NewRandom().String()
+			return txn.Set(key, []byte(id))
+		}
+		idb, err := v.Value()
+		if err != nil {
+			return err
+		}
+		id = string(idb)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return
+}
 func (t *Terminus) putObject(cf int, path []byte, object []byte) {
 	t.db.Update(func(txn *badger.Txn) error {
 		key := make([]byte, len(path)+1)
