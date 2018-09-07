@@ -12,6 +12,12 @@ import (
 	"github.com/immesys/wavemq/server"
 )
 
+const WAVEMQPermissionSet = "\x4a\xd2\x3f\x5f\x6e\x73\x17\x38\x98\xef\x51\x8c\x6a\xe2\x7a\x7f\xcf\xf4\xfe\x9b\x86\xa3\xf1\xa2\x08\xc4\xde\x9e\xac\x95\x39\x6b"
+const WAVEMQPublish = "publish"
+const WAVEMQSubscribe = "subscribe"
+
+//TODO test expiry gives unsub notifications
+
 type Configuration struct {
 	RoutingConfig core.RoutingConfig
 	WaveConfig    waved.Configuration

@@ -111,11 +111,16 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 			err := s.am.CheckMessage(it)
 			if err != nil {
 				fmt.Printf("dropping message due to invalid proof\n")
-			} else {
-				r.Send(&pb.SubscriptionMessage{
-					Message: it,
-				})
+				continue
 			}
+			m, err := s.am.PrepareMessage(p, m)
+			if err != nil {
+				fmt.Printf("dropping message, could not prepare: %v\n", err)
+				continue
+			}
+			r.Send(&pb.SubscriptionMessage{
+				Message: m,
+			})
 		}
 	}
 }
