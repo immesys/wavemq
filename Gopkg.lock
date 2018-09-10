@@ -115,6 +115,12 @@
   version = "v1.2.1"
 
 [[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
     "runtime",
@@ -154,7 +160,7 @@
     "waved",
     "wve"
   ]
-  revision = "1928a320e5674f4e7ac2f56927f3d637a52d3379"
+  revision = "814755eaed75d40a47491fcc19fcc3f97a22f26e"
 
 [[projects]]
   branch = "master"
@@ -183,8 +189,8 @@
 [[projects]]
   name = "github.com/pborman/uuid"
   packages = ["."]
-  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
-  version = "v1.1"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
 
 [[projects]]
   name = "github.com/philhofer/fwd"
@@ -305,7 +311,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
+  revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
 
 [[projects]]
   branch = "master"
@@ -314,7 +320,7 @@
     "cpu",
     "unix"
   ]
-  revision = "2b024373dcd9800f0cae693839fac6ede8d64a8c"
+  revision = "8cf3aee429924738c56c34bb819c4ea8273fc434"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -389,6 +395,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "70d4f7408965eef19d7f94d7f4a9ec553f004ce6fe665881af6555ac392c3c3f"
+  inputs-digest = "2fd4dd104b12957384dde6d0b099aa0c0f2c39fef4fdd4749507aa88e1b168e0"
   solver-name = "gps-cdcl"
   solver-version = 1

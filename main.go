@@ -17,7 +17,8 @@ const WAVEMQPublish = "publish"
 const WAVEMQSubscribe = "subscribe"
 
 //TODO test expiry gives unsub notifications
-
+//TODO add "we are DR for" in config. Reject peer publish messages if we are not DR
+//TODO persist messages if they have persist flag and we are DR
 type Configuration struct {
 	RoutingConfig core.RoutingConfig
 	WaveConfig    waved.Configuration
