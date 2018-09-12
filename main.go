@@ -10,7 +10,10 @@ import (
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wavemq/core"
 	"github.com/immesys/wavemq/server"
+	logging "github.com/op/go-logging"
 )
+
+var lg = logging.MustGetLogger("main")
 
 const WAVEMQPermissionSet = "\x4a\xd2\x3f\x5f\x6e\x73\x17\x38\x98\xef\x51\x8c\x6a\xe2\x7a\x7f\xcf\xf4\xfe\x9b\x86\xa3\xf1\xa2\x08\xc4\xde\x9e\xac\x95\x39\x6b"
 const WAVEMQPublish = "publish"
@@ -27,7 +30,12 @@ type Configuration struct {
 	PeerConfig    server.PeerServerConfig
 }
 
+func configLogs(cfg *Configuration) {
+
+}
+
 func main() {
+
 	if len(os.Args) != 2 {
 		fmt.Printf("usage: wavemq config.toml\n")
 		os.Exit(1)
@@ -39,6 +47,15 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("configuration loaded\n")
+
+	//Configure logging
+	lg.Debugf("debug %s", Password("secret"))
+	lg.Info("info")
+	lg.Notice("notice")
+	lg.Warning("warning")
+	lg.Error("err")
+	lg.Critical("crit")
+
 	qm, err := core.NewQManager(&conf.QueueConfig)
 	if err != nil {
 		fmt.Printf("failed to initialize queues: %v\n", err)
