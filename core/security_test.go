@@ -33,6 +33,58 @@ var am *AuthModule
 func init() {
 	am = getam()
 }
+
+func TestSubProof(t *testing.T) {
+	ns, err := am.wave.CreateEntity(context.Background(), &pb.CreateEntityParams{})
+	require.NoError(t, err)
+	am.wave.PublishEntity(context.Background(), &pb.PublishEntityParams{
+		DER: ns.PublicDER,
+	})
+	ent, err := am.wave.CreateEntity(context.Background(), &pb.CreateEntityParams{})
+	require.NoError(t, err)
+	am.wave.PublishEntity(context.Background(), &pb.PublishEntityParams{
+		DER: ent.PublicDER,
+	})
+	attresp, err := am.wave.CreateAttestation(context.Background(), &pb.CreateAttestationParams{
+		Perspective: &pb.Perspective{
+			EntitySecret: &pb.EntitySecret{
+				DER: ns.SecretDER,
+			},
+		},
+		Publish:     true,
+		SubjectHash: ent.Hash,
+		Policy: &pb.Policy{
+			RTreePolicy: &pb.RTreePolicy{
+				Namespace: ns.Hash,
+				Statements: []*pb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(WAVEMQPermissionSet),
+						Permissions:   []string{WAVEMQSubscribe},
+						Resource:      "foo/bar",
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, attresp.Error)
+	persp := &mqpb.Perspective{
+		EntitySecret: &mqpb.EntitySecret{
+			DER: ent.SecretDER,
+		},
+	}
+	subreq, err := am.FormSubRequest(&mqpb.SubscribeParams{
+		Perspective: persp,
+		Namespace:   ns.Hash,
+		Uri:         "foo/bar",
+		Identifier:  "super-unique",
+		Expiry:      120,
+	}, "lol")
+
+	require.NoError(t, err)
+	err = am.CheckSubscription(subreq)
+	require.NoError(t, err)
+}
 func TestMessageNoProof(t *testing.T) {
 	ns, err := am.wave.CreateEntity(context.Background(), &pb.CreateEntityParams{})
 	require.NoError(t, err)

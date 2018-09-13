@@ -153,14 +153,12 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
-	fmt.Printf("yy G\n")
 
 	expiry := time.Unix(0, presp.Result.Expiry*1e6)
 	fmt.Printf("proof expires: %s\n", expiry)
 	if expiry.After(time.Now().Add(ProofMaxCacheTime)) {
 		expiry = time.Now().Add(ProofMaxCacheTime)
 	}
-	fmt.Printf("xx B\n")
 	am.icachemu.Lock()
 	am.icache[ick] = &icacheItem{
 		expires: expiry,
@@ -178,6 +176,7 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 	hash.Write(s.Tbs.Namespace)
 	hash.Write([]byte(s.Tbs.Uri))
 	hash.Write([]byte(s.Tbs.Id))
+	hash.Write([]byte(s.Tbs.RouterID))
 	digest := hash.Sum(nil)
 
 	resp, err := am.wave.VerifySignature(context.Background(), &eapipb.VerifySignatureParams{
@@ -210,7 +209,6 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 		}
 		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
 		ProofDER: s.ProofDER,
@@ -321,9 +319,7 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 }
 
 func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*pb.PeerSubscribeParams, wve.WVE) {
-	//TODO
 
-	//Check the signature
 	hash := sha3.New256()
 	hash.Write(p.Namespace)
 	hash.Write([]byte(p.Uri))
@@ -338,6 +334,13 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		},
 	}
 
+	iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
+		Content: p.Perspective.EntitySecret.DER,
+	})
+	if err != nil {
+		return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+	}
+
 	signresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
 		Perspective: perspective,
 		Content:     digest,
@@ -349,7 +352,7 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		return nil, wve.Err(wve.InvalidSignature, signresp.Error.Message)
 	}
 
-	if p.CustomProofDER != nil {
+	if p.CustomProofDER == nil {
 		//Build a proof
 		proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
 			Perspective: perspective,
@@ -376,10 +379,11 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		}
 		return &pb.PeerSubscribeParams{
 			Tbs: &pb.PeerSubscriptionTBS{
-				Namespace: p.Namespace,
-				Uri:       p.Uri,
-				Id:        p.Identifier,
-				RouterID:  routerID,
+				SourceEntity: iresp.Entity.Hash,
+				Namespace:    p.Namespace,
+				Uri:          p.Uri,
+				Id:           p.Identifier,
+				RouterID:     routerID,
 			},
 			Signature:      signresp.Signature,
 			ProofDER:       proofresp.ProofDER,
@@ -388,10 +392,11 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 	} else {
 		return &pb.PeerSubscribeParams{
 			Tbs: &pb.PeerSubscriptionTBS{
-				Namespace: p.Namespace,
-				Uri:       p.Uri,
-				Id:        p.Identifier,
-				RouterID:  routerID,
+				SourceEntity: iresp.Entity.Hash,
+				Namespace:    p.Namespace,
+				Uri:          p.Uri,
+				Id:           p.Identifier,
+				RouterID:     routerID,
 			},
 			Signature:      signresp.Signature,
 			ProofDER:       p.CustomProofDER,
