@@ -9,8 +9,11 @@ import (
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
+	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
+
+var lg = logging.MustGetLogger("main")
 
 // On the roles of this daemon.
 // A running wavemq daemon can be in a bunch of different roles:
@@ -104,6 +107,7 @@ func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResp
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
 	sub, err := s.am.FormSubRequest(p, s.tm.RouterID())
 	if err != nil {
+		lg.Infof("failed to subscribe to %q: %s", p.Uri, err)
 		r.Send(&pb.SubscriptionMessage{
 			Error: ToError(err),
 		})
@@ -111,6 +115,7 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 	}
 	q, uerr := s.tm.CreateSubscription(sub)
 	if uerr != nil {
+		lg.Infof("failed to subscribe to %q: %s", p.Uri, uerr)
 		r.Send(&pb.SubscriptionMessage{
 			Error: ToError(wve.ErrW(core.SubscriptionFailed, "could not subscribe", uerr)),
 		})
@@ -148,7 +153,7 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			}
 			err := s.am.CheckMessage(it)
 			if err != nil {
-				fmt.Printf("dropping message due to invalid proof\n")
+				lg.Infof("dropping message on %q due to invalid proof", m.Tbs.Uri)
 			} else {
 				fmt.Printf("sending\n")
 				err := r.Send(&pb.SubscriptionMessage{

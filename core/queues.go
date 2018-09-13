@@ -519,8 +519,6 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 		if ((q.uncommittedSize + q.size) > 0) && ((q.uncommittedSize+q.size+int64(sz) > q.hdr.MaxSize) ||
 			(q.uncommittedLength+q.length+1 > q.hdr.MaxLength)) {
 			fmt.Printf("dropping message: %d\n", sz)
-			fmt.Printf("sizes: %d %d %d %d\n", q.uncommittedSize, q.size+q.uncommittedLength+q.length)
-			fmt.Printf("maxes: %d %d\n", q.hdr.MaxSize, q.hdr.MaxLength)
 			q.dequeue()
 			q.drops++
 			continue

@@ -127,8 +127,8 @@
     "runtime/internal",
     "utilities"
   ]
-  revision = "92583770e3f01b09a0d3e9bdf64321d8bebd48f2"
-  version = "v1.4.1"
+  revision = "8558711daa6c2853489043207b563dceacbc19cf"
+  version = "v1.5.0"
 
 [[projects]]
   branch = "master"
@@ -160,7 +160,7 @@
     "waved",
     "wve"
   ]
-  revision = "814755eaed75d40a47491fcc19fcc3f97a22f26e"
+  revision = "fa48c23f5d09ce5dd69400536d9854e071afb217"
 
 [[projects]]
   branch = "master"
@@ -185,6 +185,12 @@
   packages = ["."]
   revision = "8be2a682ab9f254311de1375145a2f78a809b07d"
   version = "v1.0.8"
+
+[[projects]]
+  name = "github.com/op/go-logging"
+  packages = ["."]
+  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
+  version = "v1"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -277,10 +283,11 @@
     ".",
     "internal",
     "trace",
-    "trace/internal"
+    "trace/internal",
+    "trace/tracestate"
   ]
-  revision = "7b558058b7cc960667590e5413ef55157b06652e"
-  version = "v0.15.0"
+  revision = "b11f239c032624b045c4c2bfd3d1287b4012ce89"
+  version = "v0.16.0"
 
 [[projects]]
   branch = "master"
@@ -297,7 +304,7 @@
     "salsa20/salsa",
     "sha3"
   ]
-  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
@@ -311,7 +318,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
@@ -320,7 +327,7 @@
     "cpu",
     "unix"
   ]
-  revision = "8cf3aee429924738c56c34bb819c4ea8273fc434"
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -351,7 +358,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "11092d34479b07829b72e10713b159248caf5dad"
+  revision = "5a2fd4cab2d6d4a18e70c34937662526cd0c4bd1"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -383,8 +390,8 @@
     "status",
     "tap"
   ]
-  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
-  version = "v1.14.0"
+  revision = "8dea3dc473e90c8179e519d91302d0597c0ca1d1"
+  version = "v1.15.0"
 
 [[projects]]
   branch = "master"
@@ -395,6 +402,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2fd4dd104b12957384dde6d0b099aa0c0f2c39fef4fdd4749507aa88e1b168e0"
+  inputs-digest = "8396f0f8e0f21d09abf18f59a59ae64a38c4d91b39fe25686bcf596dd174ea64"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -19,7 +19,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-const WAVEMQPermissionSet = "\x4a\xd2\x3f\x5f\x6e\x73\x17\x38\x98\xef\x51\x8c\x6a\xe2\x7a\x7f\xcf\xf4\xfe\x9b\x86\xa3\xf1\xa2\x08\xc4\xde\x9e\xac\x95\x39\x6b"
+const WAVEMQPermissionSet = "\x1b\x20\x14\x33\x74\xb3\x2f\xd2\x74\x39\x54\xfe\x47\x86\xf6\xcf\x86\xd4\x03\x72\x0f\x5e\xc4\x42\x36\xb6\x58\xc2\x6a\x1e\x68\x0f\x6e\x01"
 const WAVEMQPublish = "publish"
 const WAVEMQSubscribe = "subscribe"
 
@@ -153,11 +153,14 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
-	expiry := time.Unix(0, presp.Result.Expiry)
+	fmt.Printf("yy G\n")
+
+	expiry := time.Unix(0, presp.Result.Expiry*1e6)
 	fmt.Printf("proof expires: %s\n", expiry)
 	if expiry.After(time.Now().Add(ProofMaxCacheTime)) {
 		expiry = time.Now().Add(ProofMaxCacheTime)
 	}
+	fmt.Printf("xx B\n")
 	am.icachemu.Lock()
 	am.icache[ick] = &icacheItem{
 		expires: expiry,
@@ -367,7 +370,7 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 			return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
 		}
 
-		expiry := time.Unix(0, proofresp.Result.Expiry)
+		expiry := time.Unix(0, proofresp.Result.Expiry*1e6)
 		if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
 			expiry = time.Unix(0, p.AbsoluteExpiry)
 		}
