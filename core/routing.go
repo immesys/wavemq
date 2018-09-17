@@ -66,6 +66,9 @@ type Terminus struct {
 
 	//Our router id. TODO: should persist across resets
 	ourNodeId string
+
+	//The namespaces that we will be designated router for
+	drnamespaces map[string]bool
 }
 
 type downstreamConnection struct {
@@ -81,13 +84,31 @@ type DesignatedRouter struct {
 	Address        string
 }
 type RoutingConfig struct {
+	//Our entity
+	RouterEntityFile string
 	//Where persisted messages get stored
 	PersistDataStore string
 	//Designated Routers
 	Router []DesignatedRouter
+	//Namespaces we are a designated router for
+	DesignatedNamespaceFiles []string
 }
 
 func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, error) {
+
+	//First validate the config
+	err := am.SetRouterEntityFile(cfg.RouterEntityFile)
+	if err != nil {
+		return nil, err
+	}
+	weRoute := make(map[string]bool)
+	for _, dn := range cfg.DesignatedNamespaceFiles {
+		ns, err := am.AddDesignatedRoutingNamespace(dn)
+		if err != nil {
+			return nil, err
+		}
+		weRoute[ns] = true
+	}
 	rv := &Terminus{
 		stree:         newSnode(),
 		rstree:        make(map[ID]*subTreeNode),
@@ -95,6 +116,7 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 		am:            am,
 		cfg:           cfg,
 		downlinkConns: make(map[string]*downstreamConnection),
+		drnamespaces:  weRoute,
 	}
 
 	rv.namespaces = make(map[string]*DesignatedRouter)
@@ -273,7 +295,17 @@ func toSubID(entityHash []byte, subid string) ID {
 //This is the real function to call for creating a subscription or resuming an existing one
 //the URI must already have the namespace in front
 func (t *Terminus) CreateSubscription(ps *pb.PeerSubscribeParams) (*Queue, wve.WVE) {
-	fulluri := base64.URLEncoding.EncodeToString(ps.Tbs.Namespace) + "/" + ps.Tbs.Uri
+	ns := base64.URLEncoding.EncodeToString(ps.Tbs.Namespace)
+	_, ok := t.namespaces[ns]
+	if !ok {
+		//We are not bound to a DR for this namespace. Are we the
+		//DR ourselves?
+		if !t.drnamespaces[ns] {
+			return nil, wve.Err(wve.InvalidParameter, "no configured DR for this namespace")
+		}
+	}
+
+	fulluri := ns + "/" + ps.Tbs.Uri
 	subid := toSubID(ps.Tbs.SourceEntity, ps.Tbs.Id)
 
 	//First see if this already exists
@@ -300,10 +332,7 @@ func (t *Terminus) CreateSubscription(ps *pb.PeerSubscribeParams) (*Queue, wve.W
 	//If this is not a local delivery queue, set the recipient ID to enable
 	//filtering later
 	if ps.Tbs.RouterID != t.ourNodeId {
-		fmt.Printf("setting recipient ID\n")
 		q.SetRecipientID(ps.Tbs.RouterID)
-	} else {
-		fmt.Printf("not setting recipient ID\n")
 	}
 	q.Flush()
 	sub := &subscription{

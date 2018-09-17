@@ -105,6 +105,10 @@ func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResp
 }
 
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
+	fmt.Printf("A LOCAL SUBSCRIBE REQUEST WAS RECEIVED\n")
+	if p.Expiry < 60 {
+		p.Expiry = 60
+	}
 	sub, err := s.am.FormSubRequest(p, s.tm.RouterID())
 	if err != nil {
 		lg.Infof("failed to subscribe to %q: %s", p.Uri, err)
@@ -153,15 +157,20 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			}
 			err := s.am.CheckMessage(it)
 			if err != nil {
-				lg.Infof("dropping message on %q due to invalid proof", m.Tbs.Uri)
-			} else {
-				fmt.Printf("sending\n")
-				err := r.Send(&pb.SubscriptionMessage{
-					Message: it,
-				})
-				if err != nil {
-					return err
-				}
+				lg.Infof("dropping message on %q due to invalid proof", it.Tbs.Uri)
+				continue
+			}
+
+			it, err = s.am.PrepareMessage(p, it)
+			if err != nil {
+				lg.Info("dropping message on %q: could not prepare: %v", it.Tbs.Uri, err.Reason())
+				continue
+			}
+			uerr := r.Send(&pb.SubscriptionMessage{
+				Message: it,
+			})
+			if uerr != nil {
+				return uerr
 			}
 		}
 	}

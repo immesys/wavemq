@@ -32,9 +32,9 @@
 
 [RoutingConfig]
 PersistDataStore = "./cldata/persist"
-
+RouterEntityFile = "./clrouter"
 [[RoutingConfig.Router]]
-  Namespace = "GyBzLKTkBE4a7tPqGjHMQ_VDgqSQRSVafAyUYcURg5scAg=="
-  EntityHash = "GyCbc47T64y2mcEP3cOM0ZRCOU_y2K-VnUhXTX-sn0cuTw=="
+  Namespace = "GyBfHOKpk7MJJZJDatu1EBQH5wbldv1zkWVBhgsGFEniSQ=="
+  EntityHash = "GyBw0shMLZkvzS7b4lDIh8Rq7VwsQFIeyijLHAwIWyJB1w=="
   EntityLocation = "default"
   Address = "127.0.0.1:7003"

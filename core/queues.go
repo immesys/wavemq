@@ -666,11 +666,9 @@ func (q *Queue) Flush() error {
 	ucTail := q.uncommitedTail
 
 	if q.head == nil {
-		fmt.Printf("assigning q.head/tail to %p %p\n", ucHead, ucTail)
 		q.head = ucHead
 		q.tail = ucTail
 	} else {
-		fmt.Printf("q.head is %p q.tail is %p\n", q.head, q.tail)
 		q.tail.Next = ucHead
 		q.tail = ucTail
 	}
@@ -777,6 +775,9 @@ bulkerase:
 
 //Returns true if the queue should be removed
 func (q *Queue) expired() bool {
+	if q.hdr.Expires == 0 {
+		return false
+	}
 	return time.Now().UnixNano() > q.hdr.Expires
 }
 

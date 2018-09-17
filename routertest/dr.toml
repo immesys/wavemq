@@ -31,4 +31,8 @@
   listenAddr = "127.0.0.1:7003"
 
 [RoutingConfig]
-PersistDataStore = "./drdata/persist"
+  PersistDataStore = "./drdata/persist"
+  RouterEntityFile = "./router.ent"
+  DesignatedNamespaceFiles = [
+    "drproof.pem",
+  ]

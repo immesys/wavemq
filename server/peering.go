@@ -29,6 +29,7 @@ type PeerServerConfig struct {
 }
 
 func NewPeerServer(tm *core.Terminus, am *core.AuthModule, cfg *PeerServerConfig) ShutdownAble {
+	//TODO add the code for verifying key exchange
 	fmt.Printf("Listening on %s\n", cfg.ListenAddr)
 	l, err := net.Listen("tcp", cfg.ListenAddr)
 	if err != nil {
@@ -113,13 +114,14 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 				fmt.Printf("dropping message due to invalid proof\n")
 				continue
 			}
-			m, err := s.am.PrepareMessage(p, m)
-			if err != nil {
-				fmt.Printf("dropping message, could not prepare: %v\n", err)
-				continue
-			}
+			//We don't prepare messages sent to peers
+			// m, err := s.am.PrepareMessage(p, m)
+			// if err != nil {
+			// 	fmt.Printf("dropping message, could not prepare: %v\n", err)
+			// 	continue
+			// }
 			r.Send(&pb.SubscriptionMessage{
-				Message: m,
+				Message: it,
 			})
 		}
 	}

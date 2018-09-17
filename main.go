@@ -30,10 +30,6 @@ type Configuration struct {
 	PeerConfig    server.PeerServerConfig
 }
 
-func configLogs(cfg *Configuration) {
-
-}
-
 func main() {
 
 	if len(os.Args) != 2 {
@@ -47,14 +43,6 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("configuration loaded\n")
-
-	//Configure logging
-	lg.Debugf("debug %s", Password("secret"))
-	lg.Info("info")
-	lg.Notice("notice")
-	lg.Warning("warning")
-	lg.Error("err")
-	lg.Critical("crit")
 
 	qm, err := core.NewQManager(&conf.QueueConfig)
 	if err != nil {

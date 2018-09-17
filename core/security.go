@@ -1,8 +1,13 @@
 package core
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/pem"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -22,6 +27,7 @@ import (
 const WAVEMQPermissionSet = "\x1b\x20\x14\x33\x74\xb3\x2f\xd2\x74\x39\x54\xfe\x47\x86\xf6\xcf\x86\xd4\x03\x72\x0f\x5e\xc4\x42\x36\xb6\x58\xc2\x6a\x1e\x68\x0f\x6e\x01"
 const WAVEMQPublish = "publish"
 const WAVEMQSubscribe = "subscribe"
+const WAVEMQRoute = "route"
 
 const ProofMaxCacheTime = 6 * time.Hour
 
@@ -37,6 +43,11 @@ type AuthModule struct {
 	// the Build cache stores the results of proof build operations
 	bcachemu sync.Mutex
 	bcache   map[bcacheKey]*bcacheItem
+
+	ourPerspective  *eapipb.Perspective
+	perspectiveHash []byte
+
+	routingProofs map[string][]byte
 }
 
 type icacheKey struct {
@@ -73,11 +84,136 @@ func NewAuthModule(cfg *waved.Configuration) (*AuthModule, error) {
 	ws := poc.NewPOC(llsdb)
 	eapi := eapi.NewEAPI(ws)
 	return &AuthModule{
-		cfg:    cfg,
-		wave:   eapi,
-		icache: make(map[icacheKey]*icacheItem),
-		bcache: make(map[bcacheKey]*bcacheItem),
+		cfg:           cfg,
+		wave:          eapi,
+		icache:        make(map[icacheKey]*icacheItem),
+		bcache:        make(map[bcacheKey]*bcacheItem),
+		routingProofs: make(map[string][]byte),
 	}, nil
+}
+
+func (am *AuthModule) AddDesignatedRoutingNamespace(filename string) (ns string, err error) {
+	contents, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", fmt.Errorf("could not read designated routing file: %v", err)
+	}
+
+	der := contents
+	pblock, _ := pem.Decode(contents)
+	if pblock != nil {
+		der = pblock.Bytes
+	}
+
+	resp, err := am.wave.VerifyProof(context.Background(), &eapipb.VerifyProofParams{
+		ProofDER: der,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not verify dr file: %v", err)
+	}
+	if resp.Error != nil {
+		return "", fmt.Errorf("could not verify dr file: %v", resp.Error.Message)
+	}
+
+	ns = base64.URLEncoding.EncodeToString(resp.Result.Policy.RTreePolicy.Namespace)
+	//Check proof actually grants the right permissions:
+	found := false
+outer:
+	for _, s := range resp.Result.Policy.RTreePolicy.Statements {
+		if bytes.Equal(s.GetPermissionSet(), []byte(WAVEMQPermissionSet)) {
+			for _, perm := range s.Permissions {
+				if perm == WAVEMQRoute {
+					found = true
+					break outer
+				}
+			}
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("designated routing proof does not actually prove wavemq:route on any namespace")
+	}
+
+	am.routingProofs[ns] = der
+	return ns, nil
+}
+
+func (am *AuthModule) SetRouterEntityFile(filename string) error {
+	contents, err := ioutil.ReadFile(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			//Generate a new entity
+			resp, err := am.wave.CreateEntity(context.Background(), &eapipb.CreateEntityParams{
+				ValidUntil: time.Now().Add(30*365*24*time.Hour).UnixNano() / 1e6,
+			})
+			if err != nil {
+				return err
+			}
+			if resp.Error != nil {
+				return errors.New(resp.Error.Message)
+			}
+
+			presp, err := am.wave.PublishEntity(context.Background(), &eapipb.PublishEntityParams{
+				DER: resp.PublicDER,
+			})
+			if err != nil {
+				return err
+			}
+			if presp.Error != nil {
+				return errors.New(presp.Error.Message)
+			}
+
+			bl := pem.Block{
+				Type:  eapi.PEM_ENTITY_SECRET,
+				Bytes: resp.SecretDER,
+			}
+			contents = pem.EncodeToMemory(&bl)
+			err = ioutil.WriteFile(filename, contents, 0600)
+			if err != nil {
+				return fmt.Errorf("could not write entity file: %v\n", err)
+			}
+		} else {
+			return fmt.Errorf("could not open router entity file: %v\n", err)
+		}
+	}
+
+	am.ourPerspective = &eapipb.Perspective{
+		EntitySecret: &eapipb.EntitySecret{
+			DER: contents,
+		},
+	}
+
+	//Check perspective is okay by doing a resync
+	resp, err := am.wave.ResyncPerspectiveGraph(context.Background(), &eapipb.ResyncPerspectiveGraphParams{
+		Perspective: am.ourPerspective,
+	})
+	if err != nil {
+		return fmt.Errorf("could not sync router entity file: %v", err)
+	}
+	if resp.Error != nil {
+		return fmt.Errorf("could not sync router entity file: %v", resp.Error.Message)
+	}
+
+	//Wait for sync, for the fun of it
+	err = am.wave.WaitForSyncCompleteHack(&eapipb.SyncParams{
+		Perspective: am.ourPerspective,
+	})
+	if err != nil {
+		return fmt.Errorf("could not sync router entity file: %v", err)
+	}
+
+	//also inspect so we can learn our hash
+	iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
+		Content: contents,
+	})
+	if err != nil {
+		return fmt.Errorf("could not inspect router entity file: %v", err)
+	}
+	if resp.Error != nil {
+		return fmt.Errorf("could not inspect router entity file: %v", resp.Error.Message)
+	}
+	am.perspectiveHash = iresp.Entity.Hash
+
+	return nil
 }
 
 //This checks that a publish message is authorized for the given URI
@@ -155,7 +291,6 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	}
 
 	expiry := time.Unix(0, presp.Result.Expiry*1e6)
-	fmt.Printf("proof expires: %s\n", expiry)
 	if expiry.After(time.Now().Add(ProofMaxCacheTime)) {
 		expiry = time.Now().Add(ProofMaxCacheTime)
 	}
@@ -247,8 +382,16 @@ func (am *AuthModule) PrepareMessage(s *pb.SubscribeParams, m *pb.Message) (*pb.
 }
 
 func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Message, wve.WVE) {
+
+	if p.Perspective == nil || p.Perspective.EntitySecret == nil {
+		return nil, wve.Err(wve.InvalidParameter, "missing perspective")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	//TODO cache
+
+	bk := bcacheKey{}
+	copy(bk.Namespace[:], p.Namespace)
 
 	perspective := &eapipb.Perspective{
 		EntitySecret: &eapipb.EntitySecret{
@@ -320,6 +463,10 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 
 func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*pb.PeerSubscribeParams, wve.WVE) {
 
+	if p.Perspective == nil || p.Perspective.EntitySecret == nil {
+		return nil, wve.Err(wve.InvalidParameter, "missing perspective")
+	}
+
 	hash := sha3.New256()
 	hash.Write(p.Namespace)
 	hash.Write([]byte(p.Uri))
@@ -379,6 +526,7 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		}
 		return &pb.PeerSubscribeParams{
 			Tbs: &pb.PeerSubscriptionTBS{
+				Expiry:       p.Expiry,
 				SourceEntity: iresp.Entity.Hash,
 				Namespace:    p.Namespace,
 				Uri:          p.Uri,
@@ -392,6 +540,7 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 	} else {
 		return &pb.PeerSubscribeParams{
 			Tbs: &pb.PeerSubscriptionTBS{
+				Expiry:       p.Expiry,
 				SourceEntity: iresp.Entity.Hash,
 				Namespace:    p.Namespace,
 				Uri:          p.Uri,

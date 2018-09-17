@@ -4,6 +4,7 @@ package core
 //improved
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -71,6 +72,7 @@ func (t *Terminus) LoadID() (id string) {
 		key := []byte("routerid")
 		v, err := txn.Get(key)
 		if err == badger.ErrKeyNotFound {
+			fmt.Printf("creating new ID for router\n")
 			id = uuid.NewRandom().String()
 			return txn.Set(key, []byte(id))
 		}
@@ -84,6 +86,7 @@ func (t *Terminus) LoadID() (id string) {
 	if err != nil {
 		panic(err)
 	}
+
 	return
 }
 func (t *Terminus) putObject(cf int, path []byte, object []byte) {
