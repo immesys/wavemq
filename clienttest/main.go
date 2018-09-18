@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"time"
 
@@ -35,20 +36,43 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	client := pb.NewWAVEMQClient(conn)
 	ctx := context.Background()
 	ns, _ := base64.URLEncoding.DecodeString(namespace)
-	resp, err := client.Publish(ctx, &pb.PublishParams{
+	_, err = client.Publish(ctx, &pb.PublishParams{
 		Perspective: persp,
 		Namespace:   ns,
 		Uri:         "foo/bar2",
 		Content:     []*pb.PayloadObject{{Schema: "hello", Content: []byte("world")}},
+		Persist:     true,
 	})
 	if err != nil {
 		panic(err)
 	}
-	spew.Dump(resp)
-	time.Sleep(5 * time.Second)
+
+	srv, err := client.Query(ctx, &pb.QueryParams{
+		Perspective: persp,
+		Namespace:   ns,
+		Uri:         "foo/*",
+	})
+	if err != nil {
+		panic(err)
+	}
+	for {
+		m, err := srv.Recv()
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			panic(err)
+		}
+		if m.Error != nil {
+			spew.Dump(m.Error)
+			panic("err")
+		}
+		fmt.Printf("got qm: %s\n", m.Message.Tbs.Uri)
+	}
 }
 
 func clienta(persp *pb.Perspective) {

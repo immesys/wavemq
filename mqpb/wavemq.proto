@@ -7,11 +7,34 @@ import "eapi.proto";
 service WAVEMQ {
   rpc Publish(PublishParams) returns (PublishResponse);
   rpc Subscribe(SubscribeParams) returns (stream SubscriptionMessage);
+  rpc Query(QueryParams) returns (stream QueryMessage);
 }
 service WAVEMQPeering {
   rpc PeerPublish(PeerPublishParams) returns (PeerPublishResponse);
   rpc PeerSubscribe(PeerSubscribeParams) returns (stream SubscriptionMessage);
   rpc PeerUnsubscribe(PeerUnsubscribeParams) returns (PeerUnsubscribeResponse);
+  rpc PeerQueryRequest(PeerQueryParams) returns (stream QueryMessage);
+}
+
+message QueryParams {
+  Perspective perspective = 1;
+  bytes namespace = 2;
+  string uri = 3;
+  //If specified, this proof will be used instead of building one
+  bytes customProofDER = 4;
+}
+
+message QueryMessage {
+  Error error = 1;
+  Message message = 2;
+}
+
+message PeerQueryParams {
+  bytes sourceEntity = 1;
+  bytes namespace = 2;
+  string uri = 3;
+  bytes signature = 4;
+  bytes proofDER = 5;
 }
 
 message PeerUnsubscribeParams {

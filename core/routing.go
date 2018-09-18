@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
+	"github.com/gogo/protobuf/proto"
 	"github.com/immesys/wave/wve"
 	pb "github.com/immesys/wavemq/mqpb"
 	"golang.org/x/crypto/sha3"
@@ -61,7 +62,7 @@ type Terminus struct {
 	//The supported namespaces
 	namespaces map[string]*DesignatedRouter
 
-	downlinkConns  map[string]*downstreamConnection
+	downlinkConns  map[string]*PeerConnection
 	downlinkConnMu sync.Mutex
 
 	//Our router id. TODO: should persist across resets
@@ -69,9 +70,12 @@ type Terminus struct {
 
 	//The namespaces that we will be designated router for
 	drnamespaces map[string]bool
+
+	uplinkConns  map[string]*PeerConnection
+	uplinkConnMu sync.RWMutex
 }
 
-type downstreamConnection struct {
+type PeerConnection struct {
 	Conn   *grpc.ClientConn
 	Ctx    context.Context
 	Cancel context.CancelFunc
@@ -92,6 +96,11 @@ type RoutingConfig struct {
 	Router []DesignatedRouter
 	//Namespaces we are a designated router for
 	DesignatedNamespaceFiles []string
+}
+
+type QueryElement struct {
+	Error wve.WVE
+	Msg   *pb.Message
 }
 
 func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, error) {
@@ -115,7 +124,8 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 		qm:            qm,
 		am:            am,
 		cfg:           cfg,
-		downlinkConns: make(map[string]*downstreamConnection),
+		downlinkConns: make(map[string]*PeerConnection),
+		uplinkConns:   make(map[string]*PeerConnection),
 		drnamespaces:  weRoute,
 	}
 
@@ -218,7 +228,8 @@ func (t *Terminus) RouterID() string {
 func (t *Terminus) Publish(m *pb.Message) {
 	fmt.Printf("publish called \n")
 	var clientlist []*subscription
-	fullUri := base64.URLEncoding.EncodeToString(m.Tbs.Namespace) + "/" + m.Tbs.Uri
+	ns := base64.URLEncoding.EncodeToString(m.Tbs.Namespace)
+	fullUri := ns + "/" + m.Tbs.Uri
 	t.rMatchSubs(fullUri, func(s *subscription) {
 		if s.q.GetIsPeerUpstream() {
 			//We only deliver local messages
@@ -251,6 +262,15 @@ func (t *Terminus) Publish(m *pb.Message) {
 			sub.q.Enqueue(m)
 			fmt.Printf("post enq length=%d (%p)\n", sub.q.length+sub.q.uncommittedLength, sub.q)
 		}
+	}
+
+	//If we are the DR for this and it is a persist message, also persist it
+	if t.drnamespaces[ns] && m.Persist {
+		serial, err := proto.Marshal(m)
+		if err != nil {
+			panic(err)
+		}
+		t.putMessage(fullUri, serial)
 	}
 }
 
@@ -405,7 +425,7 @@ func (t *Terminus) bgTasks() {
 	}
 }
 
-func (t *Terminus) downstreamClient(namespace string) (*downstreamConnection, error) {
+func (t *Terminus) downstreamClient(namespace string) (*PeerConnection, error) {
 	rtr := t.namespaces[namespace]
 	t.downlinkConnMu.Lock()
 	conn, ok := t.downlinkConns[namespace]
@@ -425,7 +445,7 @@ func (t *Terminus) downstreamClient(namespace string) (*downstreamConnection, er
 		exconn, ok := t.downlinkConns[namespace]
 		if !ok || exconn.Ctx.Err() != nil {
 			//Set our one
-			conn = &downstreamConnection{
+			conn = &PeerConnection{
 				Ctx:    ctx,
 				Cancel: cancel,
 				Conn:   nc,
@@ -517,7 +537,23 @@ func (t *Terminus) beginUpstreamPeering(q *Queue, dr *DesignatedRouter) {
 	}
 }
 
+func (t *Terminus) GetDesignatedRouterConnection(namespace string) *PeerConnection {
+	t.uplinkConnMu.RLock()
+	conn, ok := t.uplinkConns[namespace]
+	t.uplinkConnMu.RUnlock()
+	if !ok {
+		return nil
+	}
+	if conn.Ctx.Err() != nil {
+		return nil
+	}
+	return conn
+}
+
 func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRouter) (err error) {
+	t.uplinkConnMu.Lock()
+	delete(t.uplinkConns, dr.Namespace)
+	t.uplinkConnMu.Unlock()
 	conn, err := grpc.Dial(dr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
 	if err != nil {
 		return err
@@ -530,6 +566,14 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 		}
 		conn.Close()
 	}()
+	peerConn := &PeerConnection{
+		Conn: conn,
+		Ctx:  ctx,
+	}
+	t.uplinkConnMu.Lock()
+	t.uplinkConns[dr.Namespace] = peerConn
+	t.uplinkConnMu.Unlock()
+
 	notify := make(chan struct{}, 5)
 	q.SubscribeNotifications(&NotificationSubscriber{
 		Ctx:    ctx,
@@ -562,6 +606,27 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 		//Wait until the queue is non empty
 		<-notify
 	}
+}
+
+func (t *Terminus) Query(namespace []byte, uri string) chan QueryElement {
+	ns := base64.URLEncoding.EncodeToString(namespace)
+	ruri := ns + "/" + uri
+	smch := make(chan SM, 10)
+	go t.GetMatchingMessage(ruri, smch)
+	rv := make(chan QueryElement, 10)
+	go func() {
+		for e := range smch {
+			m := pb.Message{}
+			err := proto.Unmarshal(e.Body, &m)
+			if err != nil {
+				fmt.Printf("failed to unmarshal proto message from persist: %v\n", err)
+				continue
+			}
+			rv <- QueryElement{Msg: &m}
+		}
+		close(rv)
+	}()
+	return rv
 }
 
 // func (cl *Client) Persist(m *Message) {

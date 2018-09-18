@@ -46,6 +46,38 @@ func NewPeerServer(tm *core.Terminus, am *core.AuthModule, cfg *PeerServerConfig
 	return s
 }
 
+func (s *peerServer) PeerQueryRequest(p *pb.PeerQueryParams, r pb.WAVEMQPeering_PeerQueryRequestServer) error {
+	err := s.am.CheckQuery(p)
+	if err != nil {
+		r.Send(&pb.QueryMessage{
+			Error: ToError(err),
+		})
+		return nil
+	}
+
+	//Lets execute the request
+	rchan := s.tm.Query(p.Namespace, p.Uri)
+	//Rchan must be completely consumed, lets ensure that happens
+	defer func() {
+		for _ = range rchan {
+		}
+	}()
+	for e := range rchan {
+		if e.Error != nil {
+			return r.Send(&pb.QueryMessage{
+				Error: ToError(e.Error),
+			})
+		}
+		uerr := r.Send(&pb.QueryMessage{
+			Message: e.Msg,
+		})
+		if uerr != nil {
+			return uerr
+		}
+	}
+	return nil
+}
+
 func (s *peerServer) PeerPublish(ctx context.Context, p *pb.PeerPublishParams) (*pb.PeerPublishResponse, error) {
 	err := s.am.CheckMessage(p.Msg)
 	if err != nil {

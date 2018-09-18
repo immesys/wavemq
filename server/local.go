@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -104,6 +106,69 @@ func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResp
 	return &pb.PublishResponse{}, nil
 }
 
+func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
+	qm, err := s.am.FormQueryRequest(p, s.tm.RouterID())
+	if err != nil {
+		r.Send(&pb.QueryMessage{
+			Error: ToError(err),
+		})
+		return nil
+	}
+
+	nsString := base64.URLEncoding.EncodeToString(p.Namespace)
+	drconn := s.tm.GetDesignatedRouterConnection(nsString)
+	if drconn == nil {
+		r.Send(&pb.QueryMessage{
+			Error: ToError(wve.Err(core.DesignatedRouterLinkDown, "could not query: designated router link down")),
+		})
+		return nil
+	}
+
+	peer := pb.NewWAVEMQPeeringClient(drconn.Conn)
+	client, uerr := peer.PeerQueryRequest(r.Context(), qm)
+	if uerr != nil {
+		r.Send(&pb.QueryMessage{
+			Error: ToError(wve.ErrW(core.DesignatedRouterLinkDown, "could not query", uerr)),
+		})
+		return nil
+	}
+	for {
+		msg, err := client.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		//TODO handle other errors
+		if msg.Error != nil {
+			r.Send(&pb.QueryMessage{
+				Error: ToError(wve.Err(core.UpstreamError, "could not query: "+msg.Error.Message)),
+			})
+			return nil
+		}
+
+		if msg.Message == nil {
+			panic("no message but no error?")
+		}
+
+		//Validate the message
+		err = s.am.CheckMessage(msg.Message)
+		if err != nil {
+			lg.Info("dropping query message: %v", err)
+			continue
+		}
+
+		//prepare message
+		pmsg, err := s.am.PrepareMessage(p.Perspective, msg.Message)
+		if err != nil {
+			lg.Info("dropping query message: %v", err)
+			continue
+		}
+
+		uerr := r.Send(&pb.QueryMessage{Message: pmsg})
+		if uerr != nil {
+			return uerr
+		}
+	}
+}
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
 	fmt.Printf("A LOCAL SUBSCRIBE REQUEST WAS RECEIVED\n")
 	if p.Expiry < 60 {
@@ -157,13 +222,13 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			}
 			err := s.am.CheckMessage(it)
 			if err != nil {
-				lg.Infof("dropping message on %q due to invalid proof", it.Tbs.Uri)
+				lg.Infof("dropping message in subscribe %q due to invalid proof", it.Tbs.Uri)
 				continue
 			}
 
-			it, err = s.am.PrepareMessage(p, it)
+			it, err = s.am.PrepareMessage(p.Perspective, it)
 			if err != nil {
-				lg.Info("dropping message on %q: could not prepare: %v", it.Tbs.Uri, err.Reason())
+				lg.Info("dropping message in subscribe %q: could not prepare: %v", it.Tbs.Uri, err.Reason())
 				continue
 			}
 			uerr := r.Send(&pb.SubscriptionMessage{

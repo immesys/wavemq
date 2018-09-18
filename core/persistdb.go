@@ -90,7 +90,7 @@ func (t *Terminus) LoadID() (id string) {
 	return
 }
 func (t *Terminus) putObject(cf int, path []byte, object []byte) {
-	t.db.Update(func(txn *badger.Txn) error {
+	err := t.db.Update(func(txn *badger.Txn) error {
 		key := make([]byte, len(path)+1)
 		key[0] = byte(cf)
 		copy(key[1:], path)
@@ -100,16 +100,20 @@ func (t *Terminus) putObject(cf int, path []byte, object []byte) {
 		}
 		return nil
 	})
+
+	if err != nil {
+		panic(err)
+	}
 }
 func (t *Terminus) getObject(cf int, path []byte) (rv []byte, err error) {
-	t.db.View(func(txn *badger.Txn) error {
+	errx := t.db.View(func(txn *badger.Txn) error {
 		key := make([]byte, len(path)+1)
 		key[0] = byte(cf)
 		copy(key[1:], path)
 		item, e := txn.Get(key)
 		if e == badger.ErrKeyNotFound {
 			rv = nil
-			err = nil
+			err = badger.ErrKeyNotFound
 			return nil
 		}
 		if e != nil {
@@ -117,14 +121,17 @@ func (t *Terminus) getObject(cf int, path []byte) (rv []byte, err error) {
 			err = e
 			return e
 		} else {
-			rv, e = item.Value()
+			rv, err = item.Value()
 			return nil
 		}
 	})
+	if errx != nil {
+		panic(errx)
+	}
 	return
 }
 func (t *Terminus) exists(cf int, path []byte) (ex bool) {
-	t.db.View(func(txn *badger.Txn) error {
+	err := t.db.View(func(txn *badger.Txn) error {
 		key := make([]byte, len(path)+1)
 		key[0] = byte(cf)
 		copy(key[1:], path)
@@ -141,6 +148,9 @@ func (t *Terminus) exists(cf int, path []byte) (ex bool) {
 		}
 		return nil
 	})
+	if err != nil {
+		panic(err)
+	}
 	return
 }
 
@@ -165,7 +175,7 @@ func (ia *iteratorAdapter) OK() bool {
 	return ia.it.ValidForPrefix(ia.pfx)
 }
 func (ia *iteratorAdapter) Key() []byte {
-	return ia.it.Item().Key()
+	return ia.it.Item().Key()[1:] //Strip CF
 }
 func (ia *iteratorAdapter) Value() []byte {
 	rv, err := ia.it.Item().Value()
@@ -181,11 +191,14 @@ func (ia *iteratorAdapter) Release() {
 func (t *Terminus) createIterator(cf int, pfx []byte) DBIterator {
 	txn := t.db.NewTransaction(false)
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
-	it.Seek(pfx)
+	key := make([]byte, len(pfx)+1)
+	key[0] = byte(cf)
+	copy(key[1:], pfx)
+	it.Seek(key)
 	return &iteratorAdapter{
 		it:  it,
 		txn: txn,
-		pfx: pfx,
+		pfx: key,
 	}
 }
 
@@ -291,6 +304,7 @@ func isDummy(value []byte) bool {
 //frontD is in left to right order, backD is in right to left order
 func (t *Terminus) getMatchingMessage(interlaced bool, uri []string, prefix int, frontD []string, backD []string,
 	skipbase bool, handle chan SM, wg *sync.WaitGroup) {
+
 	//Make CF
 	cf := cfMsg
 	if interlaced {
@@ -440,7 +454,6 @@ func (t *Terminus) GetMatchingMessage(uri string, handle chan SM) {
 		close(handle)
 		return
 	}
-
 	pfxlen := staridx
 	sfxlen := len(parts) - staridx - 1
 	if pfxlen-sfxlen > sfxlen { //Prefix is much longer than suffix, use leftscan

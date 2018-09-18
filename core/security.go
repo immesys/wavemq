@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/huichen/murmur"
 	"github.com/immesys/wave/eapi"
 	eapipb "github.com/immesys/wave/eapi/pb"
 	"github.com/immesys/wave/iapi"
@@ -27,9 +28,12 @@ import (
 const WAVEMQPermissionSet = "\x1b\x20\x14\x33\x74\xb3\x2f\xd2\x74\x39\x54\xfe\x47\x86\xf6\xcf\x86\xd4\x03\x72\x0f\x5e\xc4\x42\x36\xb6\x58\xc2\x6a\x1e\x68\x0f\x6e\x01"
 const WAVEMQPublish = "publish"
 const WAVEMQSubscribe = "subscribe"
+const WAVEMQQuery = "query"
 const WAVEMQRoute = "route"
 
-const ProofMaxCacheTime = 6 * time.Hour
+const ValidatedProofMaxCacheTime = 6 * time.Hour
+const SuccessfulProofCacheTime = 6 * time.Hour
+const FailedProofCacheTime = 5 * time.Minute
 
 type AuthModule struct {
 	cfg  *waved.Configuration
@@ -37,17 +41,21 @@ type AuthModule struct {
 
 	// the Incoming cache stores the time that a given proof must be
 	// revalidated
-	icachemu sync.Mutex
+	icachemu sync.RWMutex
 	icache   map[icacheKey]*icacheItem
 
 	// the Build cache stores the results of proof build operations
-	bcachemu sync.Mutex
+	bcachemu sync.RWMutex
 	bcache   map[bcacheKey]*bcacheItem
 
 	ourPerspective  *eapipb.Perspective
 	perspectiveHash []byte
 
 	routingProofs map[string][]byte
+
+	//Hash of perspective DER -> public entity hash
+	phashcachemu sync.RWMutex
+	phashcache   map[uint32][]byte
 }
 
 type icacheKey struct {
@@ -58,8 +66,9 @@ type icacheKey struct {
 	ProofHash  [32]byte
 }
 type icacheItem struct {
-	expires time.Time
-	valid   bool
+	CacheExpiry time.Time
+	ProofExpiry time.Time
+	Valid       bool
 }
 
 type bcacheKey struct {
@@ -68,6 +77,10 @@ type bcacheKey struct {
 	PolicyHash [32]byte
 }
 type bcacheItem struct {
+	CacheExpiry time.Time
+	Valid       bool
+	DER         []byte
+	ProofExpiry time.Time
 }
 
 func NewAuthModule(cfg *waved.Configuration) (*AuthModule, error) {
@@ -89,6 +102,7 @@ func NewAuthModule(cfg *waved.Configuration) (*AuthModule, error) {
 		icache:        make(map[icacheKey]*icacheItem),
 		bcache:        make(map[bcacheKey]*bcacheItem),
 		routingProofs: make(map[string][]byte),
+		phashcache:    make(map[uint32][]byte),
 	}, nil
 }
 
@@ -220,6 +234,9 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
+	if m.Tbs == nil {
+		return wve.Err(wve.InvalidParameter, "message missing TBS")
+	}
 	//Check the signature
 	hash := sha3.New256()
 	hash.Write(m.Tbs.Namespace)
@@ -256,10 +273,12 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	am.icachemu.Lock()
 	entry, ok := am.icache[ick]
 	am.icachemu.Unlock()
-	if ok && entry.expires.After(time.Now()) {
-		if entry.valid {
+	if ok && entry.CacheExpiry.After(time.Now()) {
+		if entry.Valid {
+			fmt.Printf("returning message valid from cache\n")
 			return nil
 		}
+		fmt.Printf("returning message invalid from cache\n")
 		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
 	}
 
@@ -283,21 +302,21 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	if presp.Error != nil {
 		am.icachemu.Lock()
 		am.icache[ick] = &icacheItem{
-			expires: time.Now().Add(ProofMaxCacheTime),
-			valid:   false,
+			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+			Valid:       false,
 		}
 		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
 
 	expiry := time.Unix(0, presp.Result.Expiry*1e6)
-	if expiry.After(time.Now().Add(ProofMaxCacheTime)) {
-		expiry = time.Now().Add(ProofMaxCacheTime)
+	if expiry.After(time.Now().Add(ValidatedProofMaxCacheTime)) {
+		expiry = time.Now().Add(ValidatedProofMaxCacheTime)
 	}
 	am.icachemu.Lock()
 	am.icache[ick] = &icacheItem{
-		expires: expiry,
-		valid:   true,
+		CacheExpiry: expiry,
+		Valid:       true,
 	}
 	am.icachemu.Unlock()
 	return nil
@@ -338,8 +357,11 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 	am.icachemu.Lock()
 	entry, ok := am.icache[ick]
 	am.icachemu.Unlock()
-	if ok && entry.expires.After(time.Now()) {
-		if entry.valid {
+	if ok && entry.CacheExpiry.After(time.Now()) {
+		if entry.Valid {
+			if time.Unix(0, s.AbsoluteExpiry).After(entry.ProofExpiry) {
+				s.AbsoluteExpiry = entry.ProofExpiry.UnixNano()
+			}
 			return nil
 		}
 		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
@@ -363,18 +385,117 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 		return wve.ErrW(wve.InternalError, "could not validate proof", err)
 	}
 	if presp.Error != nil {
+		entry := &icacheItem{
+			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+			Valid:       false,
+		}
+		am.icachemu.Lock()
+		am.icache[ick] = entry
+		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
 
+	fmt.Printf("proof expiry is %s\n", time.Unix(0, presp.Result.Expiry*1e6))
+
+	entry = &icacheItem{
+		CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+		Valid:       true,
+		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
+	}
+	am.icachemu.Lock()
+	am.icache[ick] = entry
+	am.icachemu.Unlock()
 	//If the user did not specify an absolute expiry, or specified one greater than
 	//the proof allows, then set the field to the proof's expiry
 	if s.AbsoluteExpiry == 0 || s.AbsoluteExpiry > presp.Result.Expiry {
-		s.AbsoluteExpiry = presp.Result.Expiry
+		s.AbsoluteExpiry = entry.ProofExpiry.UnixNano()
 	}
 	return nil
 }
 
-func (am *AuthModule) PrepareMessage(s *pb.SubscribeParams, m *pb.Message) (*pb.Message, wve.WVE) {
+//Check that the given proof is valid for subscription on the given URI
+func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
+
+	//Check the signature
+	hash := sha3.New256()
+	hash.Write(s.Namespace)
+	hash.Write([]byte(s.Uri))
+	digest := hash.Sum(nil)
+
+	resp, err := am.wave.VerifySignature(context.Background(), &eapipb.VerifySignatureParams{
+		Signer: s.SourceEntity,
+		//Todo signer location
+		Signature: s.Signature,
+		Content:   digest,
+	})
+	if err != nil {
+		return wve.ErrW(wve.InvalidSignature, "could not validate signature", err)
+	}
+	if resp.Error != nil {
+		return wve.Err(wve.InvalidSignature, "failed to validate subscription signature: "+resp.Error.Message)
+	}
+
+	ick := icacheKey{}
+	copy(ick.Namespace[:], s.Namespace)
+	ick.URI = s.Uri
+	ick.Permission = WAVEMQQuery
+	h := sha3.NewShake256()
+	h.Write(s.ProofDER)
+	h.Read(ick.ProofHash[:])
+
+	am.icachemu.RLock()
+	entry, ok := am.icache[ick]
+	am.icachemu.RUnlock()
+	if ok && entry.CacheExpiry.After(time.Now()) {
+		if entry.Valid {
+			return nil
+		}
+		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
+		ProofDER: s.ProofDER,
+		RequiredRTreePolicy: &eapipb.RTreePolicy{
+			Namespace: s.Namespace,
+			Statements: []*eapipb.RTreePolicyStatement{
+				{
+					PermissionSet: []byte(WAVEMQPermissionSet),
+					Permissions:   []string{WAVEMQQuery},
+					Resource:      s.Uri,
+				},
+			},
+		},
+	})
+	cancel()
+	if err != nil {
+		return wve.ErrW(wve.InternalError, "could not validate proof", err)
+	}
+	if presp.Error != nil {
+		entry := &icacheItem{
+			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+			Valid:       false,
+		}
+		am.icachemu.Lock()
+		am.icache[ick] = entry
+		am.icachemu.Unlock()
+		return wve.Err(wve.ProofInvalid, presp.Error.Message)
+	}
+
+	entry = &icacheItem{
+		CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+		Valid:       true,
+		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
+	}
+	am.icachemu.Lock()
+	am.icache[ick] = entry
+	am.icachemu.Unlock()
+
+	return nil
+}
+
+//TODO check all params as well formed
+
+func (am *AuthModule) PrepareMessage(persp *pb.Perspective, m *pb.Message) (*pb.Message, wve.WVE) {
 	//Decrypt the message with the perspective given in the subscribe params. Copies the message
 	//and returns it.
 	//TODO decryption
@@ -387,11 +508,26 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 		return nil, wve.Err(wve.InvalidParameter, "missing perspective")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	//TODO cache
-
-	bk := bcacheKey{}
-	copy(bk.Namespace[:], p.Namespace)
+	perspectiveHash := murmur.Murmur3(p.Perspective.EntitySecret.DER)
+	am.phashcachemu.RLock()
+	realhash, ok := am.phashcache[perspectiveHash]
+	am.phashcachemu.RUnlock()
+	if !ok {
+		//We need our entity hash
+		iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
+			Content: p.Perspective.EntitySecret.DER,
+		})
+		if err != nil {
+			return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+		}
+		if iresp.Error != nil {
+			return nil, wve.Err(wve.NoProofFound, "failed validate perspective: "+iresp.Error.Message)
+		}
+		am.phashcachemu.Lock()
+		am.phashcache[perspectiveHash] = iresp.Entity.Hash
+		am.phashcachemu.Unlock()
+		realhash = iresp.Entity.Hash
+	}
 
 	perspective := &eapipb.Perspective{
 		EntitySecret: &eapipb.EntitySecret{
@@ -399,31 +535,84 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 			Passphrase: p.Perspective.EntitySecret.Passphrase,
 		},
 	}
-	proofresp, err := am.wave.BuildRTreeProof(ctx, &eapipb.BuildRTreeProofParams{
-		Perspective: perspective,
-		Namespace:   p.Namespace,
-		Statements: []*eapipb.RTreePolicyStatement{
-			{
-				PermissionSet: []byte(WAVEMQPermissionSet),
-				Permissions:   []string{WAVEMQPublish},
-				Resource:      p.Uri,
-			},
-		},
-		ResyncFirst: true,
-	})
-	cancel()
-	if err != nil {
-		return nil, wve.ErrW(wve.NoProofFound, "failed to build", err)
-	}
-	if proofresp.Error != nil {
-		return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
-	}
-	//We need our entity hash
-	iresp, err := am.wave.Inspect(ctx, &eapipb.InspectParams{
-		Content: p.Perspective.EntitySecret.DER,
-	})
-	if err != nil {
-		return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+
+	bk := bcacheKey{}
+	copy(bk.Namespace[:], p.Namespace)
+	copy(bk.Target[:], realhash)
+
+	policyhash := sha3.New256()
+	policyhash.Write([]byte(WAVEMQPublish))
+	policyhash.Write([]byte("onuri="))
+	policyhash.Write([]byte(p.Uri))
+	poldigest := policyhash.Sum(nil)
+	copy(bk.PolicyHash[:], poldigest)
+
+	am.bcachemu.RLock()
+	cachedproof, ok := am.bcache[bk]
+	am.bcachemu.RUnlock()
+
+	var proofder []byte
+
+	if p.CustomProofDER != nil {
+		proofder = p.CustomProofDER
+	} else {
+		rebuildproof := true
+		if ok {
+			if cachedproof.CacheExpiry.After(time.Now()) {
+				rebuildproof = false
+			}
+		}
+
+		if rebuildproof {
+			fmt.Printf("[PC] form message proof cache MISS\n")
+		} else {
+			fmt.Printf("[PC] form message proof cache HIT\n")
+		}
+
+		if rebuildproof {
+			proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
+				Perspective: perspective,
+				Namespace:   p.Namespace,
+				Statements: []*eapipb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(WAVEMQPermissionSet),
+						Permissions:   []string{WAVEMQPublish},
+						Resource:      p.Uri,
+					},
+				},
+				ResyncFirst: true,
+			})
+			if err != nil {
+				return nil, wve.ErrW(wve.NoProofFound, "failed to build", err)
+			}
+			if proofresp.Error != nil {
+				ci := &bcacheItem{
+					CacheExpiry: time.Now().Add(FailedProofCacheTime),
+					Valid:       false,
+				}
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
+			}
+
+			proofder = proofresp.ProofDER
+			ci := &bcacheItem{
+				CacheExpiry: time.Now().Add(SuccessfulProofCacheTime),
+				Valid:       true,
+				DER:         proofresp.ProofDER,
+				ProofExpiry: time.Unix(0, proofresp.Result.Expiry*1e6),
+			}
+			if ci.ProofExpiry.Before(ci.CacheExpiry) {
+				ci.CacheExpiry = ci.ProofExpiry
+			}
+			am.bcachemu.Lock()
+			am.bcache[bk] = ci
+			am.bcachemu.Unlock()
+		} else {
+			proofder = cachedproof.DER
+		}
+
 	}
 	hash := sha3.New256()
 	hash.Write(p.Namespace)
@@ -447,11 +636,11 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 	}
 
 	return &pb.Message{
-		ProofDER:  proofresp.ProofDER,
+		ProofDER:  proofder,
 		Signature: signresp.Signature,
 		Persist:   p.Persist,
 		Tbs: &pb.MessageTBS{
-			SourceEntity: iresp.Entity.Hash,
+			SourceEntity: realhash,
 			//TODO source location
 			Namespace:    p.Namespace,
 			Uri:          p.Uri,
@@ -486,6 +675,9 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 	})
 	if err != nil {
 		return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+	}
+	if iresp.Error != nil {
+		return nil, wve.Err(wve.NoProofFound, "failed validate perspective: "+iresp.Error.Message)
 	}
 
 	signresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
@@ -552,5 +744,152 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 			AbsoluteExpiry: p.AbsoluteExpiry,
 		}, nil
 	}
+
+}
+
+func (am *AuthModule) FormQueryRequest(p *pb.QueryParams, routerID string) (*pb.PeerQueryParams, wve.WVE) {
+
+	if p.Perspective == nil || p.Perspective.EntitySecret == nil {
+		return nil, wve.Err(wve.InvalidParameter, "missing perspective")
+	}
+
+	perspectiveHash := murmur.Murmur3(p.Perspective.EntitySecret.DER)
+	am.phashcachemu.RLock()
+	realhash, ok := am.phashcache[perspectiveHash]
+	am.phashcachemu.RUnlock()
+	if !ok {
+		//We need our entity hash
+		iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
+			Content: p.Perspective.EntitySecret.DER,
+		})
+		if err != nil {
+			return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+		}
+		if iresp.Error != nil {
+			return nil, wve.Err(wve.NoProofFound, "failed validate perspective: "+iresp.Error.Message)
+		}
+		am.phashcachemu.Lock()
+		am.phashcache[perspectiveHash] = iresp.Entity.Hash
+		am.phashcachemu.Unlock()
+		realhash = iresp.Entity.Hash
+	}
+
+	perspective := &eapipb.Perspective{
+		EntitySecret: &eapipb.EntitySecret{
+			DER:        p.Perspective.EntitySecret.DER,
+			Passphrase: p.Perspective.EntitySecret.Passphrase,
+		},
+	}
+
+	var proofder []byte
+	if p.CustomProofDER == nil {
+		bk := bcacheKey{}
+		copy(bk.Namespace[:], p.Namespace)
+		copy(bk.Target[:], realhash)
+
+		policyhash := sha3.New256()
+		policyhash.Write([]byte(WAVEMQQuery))
+		policyhash.Write([]byte("onuri="))
+		policyhash.Write([]byte(p.Uri))
+		poldigest := policyhash.Sum(nil)
+		copy(bk.PolicyHash[:], poldigest)
+
+		am.bcachemu.RLock()
+		cachedproof, ok := am.bcache[bk]
+		am.bcachemu.RUnlock()
+
+		rebuildproof := true
+		if ok {
+			if cachedproof.CacheExpiry.After(time.Now()) {
+				rebuildproof = false
+			}
+		}
+
+		if rebuildproof {
+			fmt.Printf("[PC] query proof cache MISS\n")
+		} else {
+			fmt.Printf("[PC] query proof cache HIT\n")
+		}
+
+		if rebuildproof {
+
+			//Build a proof
+			proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
+				Perspective: perspective,
+				Namespace:   p.Namespace,
+				Statements: []*eapipb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(WAVEMQPermissionSet),
+						Permissions:   []string{WAVEMQQuery},
+						Resource:      p.Uri,
+					},
+				},
+				ResyncFirst: true,
+			})
+			if err != nil {
+				return nil, wve.ErrW(wve.NoProofFound, "failed to build", err)
+			}
+			if proofresp.Error != nil {
+				ci := &bcacheItem{
+					CacheExpiry: time.Now().Add(FailedProofCacheTime),
+					Valid:       false,
+				}
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+
+				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
+			}
+
+			ci := &bcacheItem{
+				CacheExpiry: time.Now().Add(SuccessfulProofCacheTime),
+				Valid:       true,
+				DER:         proofresp.ProofDER,
+				ProofExpiry: time.Unix(0, proofresp.Result.Expiry*1e6),
+			}
+			if ci.ProofExpiry.Before(ci.CacheExpiry) {
+				ci.CacheExpiry = ci.ProofExpiry
+			}
+			am.bcachemu.Lock()
+			am.bcache[bk] = ci
+			am.bcachemu.Unlock()
+
+			proofder = proofresp.ProofDER
+
+		} else {
+			if cachedproof.Valid {
+				proofder = cachedproof.DER
+			} else {
+				return nil, wve.Err(wve.NoProofFound, "we've cached that there is no proof for this")
+			}
+		}
+
+	} else {
+		proofder = p.CustomProofDER
+	}
+
+	hash := sha3.New256()
+	hash.Write(p.Namespace)
+	hash.Write([]byte(p.Uri))
+	digest := hash.Sum(nil)
+
+	signresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
+		Perspective: perspective,
+		Content:     digest,
+	})
+	if err != nil {
+		return nil, wve.ErrW(wve.InvalidSignature, "failed to sign", err)
+	}
+	if signresp.Error != nil {
+		return nil, wve.Err(wve.InvalidSignature, signresp.Error.Message)
+	}
+
+	return &pb.PeerQueryParams{
+		SourceEntity: realhash,
+		Namespace:    p.Namespace,
+		Uri:          p.Uri,
+		Signature:    signresp.Signature,
+		ProofDER:     proofder,
+	}, nil
 
 }
