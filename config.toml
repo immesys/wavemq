@@ -1,6 +1,9 @@
 [WaveConfig]
   database = "./data/wave"
   listenIp = "127.0.0.1:7002"
+  # this is in general, unsafe, but if you want your router to function with
+  # no internet access, it is required
+  defaultToUnrevoked = true
 
   [WaveConfig.storage]
     # This is the default HTTPS server
@@ -35,6 +38,4 @@ PersistDataStore = "./data/persist"
 
 [[RoutingConfig.Router]]
   Namespace = "GyBzLKTkBE4a7tPqGjHMQ_VDgqSQRSVafAyUYcURg5scAg=="
-  EntityHash = "GyCbc47T64y2mcEP3cOM0ZRCOU_y2K-VnUhXTX-sn0cuTw=="
-  EntityLocation = "default"
   Address = "127.0.0.1:7001"

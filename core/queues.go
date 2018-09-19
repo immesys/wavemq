@@ -507,18 +507,14 @@ func (q *Queue) SetTrunking(v bool) {
 
 //Add an element to the queue, dropping old records as required
 func (q *Queue) Enqueue(m *pb.Message) error {
-	q.ck()
-	defer q.ck()
-	fmt.Printf("start of enq %p %p\n", q.uncommitedHead, q.uncommitedTail)
-	defer func() { fmt.Printf("end of enq %p %p\n", q.uncommitedHead, q.uncommitedTail) }()
 	sz := proto.Size(m)
 	q.mu.Lock()
-
+	q.ck()
 	//Drop elements to make space for the new one
 	for {
 		if ((q.uncommittedSize + q.size) > 0) && ((q.uncommittedSize+q.size+int64(sz) > q.hdr.MaxSize) ||
 			(q.uncommittedLength+q.length+1 > q.hdr.MaxLength)) {
-			fmt.Printf("dropping message: %d\n", sz)
+			fmt.Printf("dropping message\n")
 			q.dequeue()
 			q.drops++
 			continue
@@ -547,6 +543,7 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 	q.uncommitedTail = it
 	q.uncommittedSize += int64(sz)
 	q.uncommittedLength++
+	q.ck()
 	if mustnotify {
 		q.notifyAndDropLock()
 	} else {

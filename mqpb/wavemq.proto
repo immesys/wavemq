@@ -49,10 +49,6 @@ message PeerPublishParams {
 }
 message PeerPublishResponse {
   Error error = 1;
-  //The number of bytes free in the queue (after putting this message in)
-  int64 size = 2;
-  //The number of items free in the queue (after putting this message in)
-  int64 length = 3;
 }
 message PeerSubscriptionTBS {
   bytes sourceEntity = 1;

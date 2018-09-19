@@ -1,13 +1,16 @@
 [WaveConfig]
   database = "./cldata/wave"
   listenIp = "127.0.0.1:7010"
-
+  defaultToUnrevoked = true
+  
   [WaveConfig.storage]
     # This is the default HTTPS server
     [WaveConfig.storage.default]
     provider = "http_v1"
     url = "https://standalone.storage.bwave.io/v1"
     version = "1"
+
+
 
 [QueueConfig]
   queueDataStore = "./cldata/queue"

@@ -1,7 +1,8 @@
 [WaveConfig]
   database = "./drdata/wave"
   listenIp = "127.0.0.1:7002"
-
+  defaultToUnrevoked = true
+  
   [WaveConfig.storage]
     # This is the default HTTPS server
     [WaveConfig.storage.default]

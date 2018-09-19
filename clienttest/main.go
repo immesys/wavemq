@@ -29,9 +29,11 @@ func main() {
 		},
 	}
 
+	stresstest(persp)
+
 	go clienta(persp)
 	go clientb(persp)
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	conn, err := grpc.Dial("127.0.0.1:7012", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
 		panic(err)
@@ -75,6 +77,65 @@ func main() {
 	}
 }
 
+func stresstest(persp *pb.Perspective) {
+
+	conn, err := grpc.Dial("127.0.0.1:7002", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
+	if err != nil {
+		panic(err)
+	}
+	client := pb.NewWAVEMQClient(conn)
+	ns, _ := base64.URLEncoding.DecodeString(namespace)
+	cl, err := client.Subscribe(context.Background(), &pb.SubscribeParams{
+		Perspective: persp,
+		Namespace:   ns,
+		Uri:         "foo/*",
+		Identifier:  "hai2",
+		Expiry:      67,
+	})
+	if err != nil {
+		panic(err)
+	}
+	time.Sleep(3 * time.Second)
+	go publishloop(persp)
+	count := 0
+	go func() {
+		lastcount := count
+		for {
+			time.Sleep(1 * time.Second)
+			fmt.Printf("delta is %d messages\n", count-lastcount)
+			lastcount = count
+		}
+	}()
+	for {
+		sm, err := cl.Recv()
+		if err != nil {
+			panic(err)
+		}
+		_ = sm
+		count++
+	}
+}
+func publishloop(persp *pb.Perspective) {
+	ctx := context.Background()
+	conn, err := grpc.Dial("127.0.0.1:7012", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
+	if err != nil {
+		panic(err)
+	}
+	client := pb.NewWAVEMQClient(conn)
+	ns, _ := base64.URLEncoding.DecodeString(namespace)
+	for {
+		_, err = client.Publish(ctx, &pb.PublishParams{
+			Perspective: persp,
+			Namespace:   ns,
+			Uri:         "foo/bar2",
+			Content:     []*pb.PayloadObject{{Schema: "hello", Content: []byte("world")}},
+			Persist:     false,
+		})
+		if err != nil {
+			panic(err)
+		}
+	}
+}
 func clienta(persp *pb.Perspective) {
 	//This is the client
 	conn, err := grpc.Dial("127.0.0.1:7012", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())

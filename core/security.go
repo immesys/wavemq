@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"bitbucket.org/creachadair/cityhash"
 	"github.com/huichen/murmur"
 	"github.com/immesys/wave/eapi"
 	eapipb "github.com/immesys/wave/eapi/pb"
@@ -63,7 +65,9 @@ type icacheKey struct {
 	Entity     [32]byte
 	URI        string
 	Permission string
-	ProofHash  [32]byte
+	ProofLow   uint64
+	ProofHigh  uint64
+	//ProofHash  [32]byte
 }
 type icacheItem struct {
 	CacheExpiry time.Time
@@ -266,19 +270,22 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	copy(ick.Entity[:], m.Tbs.SourceEntity)
 	ick.URI = m.Tbs.Uri
 	ick.Permission = WAVEMQPublish
-	h := sha3.NewShake256()
-	h.Write(m.ProofDER)
-	h.Read(ick.ProofHash[:])
+
+	ick.ProofLow, ick.ProofHigh = cityhash.Hash128(m.ProofDER)
+
+	// h := sha3.NewShake256()
+	// h.Write(m.ProofDER)
+	// h.Read(ick.ProofHash[:])
 
 	am.icachemu.Lock()
 	entry, ok := am.icache[ick]
 	am.icachemu.Unlock()
 	if ok && entry.CacheExpiry.After(time.Now()) {
 		if entry.Valid {
-			fmt.Printf("returning message valid from cache\n")
+			//fmt.Printf("returning message valid from cache\n")
 			return nil
 		}
-		fmt.Printf("returning message invalid from cache\n")
+		//fmt.Printf("returning message invalid from cache\n")
 		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
 	}
 
@@ -350,9 +357,11 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 	copy(ick.Namespace[:], s.Tbs.Namespace)
 	ick.URI = s.Tbs.Uri
 	ick.Permission = WAVEMQSubscribe
-	h := sha3.NewShake256()
-	h.Write(s.ProofDER)
-	h.Read(ick.ProofHash[:])
+	ick.ProofLow, ick.ProofHigh = cityhash.Hash128(s.ProofDER)
+	//
+	// h := sha3.NewShake256()
+	// h.Write(s.ProofDER)
+	// h.Read(ick.ProofHash[:])
 
 	am.icachemu.Lock()
 	entry, ok := am.icache[ick]
@@ -439,9 +448,10 @@ func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
 	copy(ick.Namespace[:], s.Namespace)
 	ick.URI = s.Uri
 	ick.Permission = WAVEMQQuery
-	h := sha3.NewShake256()
-	h.Write(s.ProofDER)
-	h.Read(ick.ProofHash[:])
+	ick.ProofLow, ick.ProofHigh = cityhash.Hash128(s.ProofDER)
+	// h := sha3.NewShake256()
+	// h.Write(s.ProofDER)
+	// h.Read(ick.ProofHash[:])
 
 	am.icachemu.RLock()
 	entry, ok := am.icache[ick]
@@ -564,9 +574,9 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 		}
 
 		if rebuildproof {
-			fmt.Printf("[PC] form message proof cache MISS\n")
+			//	fmt.Printf("[PC] form message proof cache MISS\n")
 		} else {
-			fmt.Printf("[PC] form message proof cache HIT\n")
+			//	fmt.Printf("[PC] form message proof cache HIT\n")
 		}
 
 		if rebuildproof {
@@ -892,4 +902,86 @@ func (am *AuthModule) FormQueryRequest(p *pb.QueryParams, routerID string) (*pb.
 		ProofDER:     proofder,
 	}, nil
 
+}
+
+func (am *AuthModule) VerifyServerHandshake(nsString string, entityHash []byte, signature []byte, proof []byte, cert []byte) error {
+	//First verify the signature
+	resp, err := am.wave.VerifySignature(context.Background(), &eapipb.VerifySignatureParams{
+		Signer:    entityHash,
+		Signature: signature,
+		Content:   cert,
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Error != nil {
+		return errors.New(resp.Error.Message)
+	}
+
+	ns, err := base64.URLEncoding.DecodeString(nsString)
+	if err != nil {
+		return err
+	}
+
+	//Signature ok, verify proof
+	presp, err := am.wave.VerifyProof(context.Background(), &eapipb.VerifyProofParams{
+		ProofDER: proof,
+		RequiredRTreePolicy: &eapipb.RTreePolicy{
+			Namespace: ns,
+			Statements: []*eapipb.RTreePolicyStatement{
+				{
+					PermissionSet: []byte(WAVEMQPermissionSet),
+					Permissions:   []string{WAVEMQRoute},
+					Resource:      "*",
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+	if presp.Error != nil {
+		return errors.New(resp.Error.Message)
+	}
+	if !bytes.Equal(presp.Result.Subject, entityHash) {
+		return errors.New("proof valid but for a different entity")
+	}
+	return nil
+}
+
+//A 34 byte multihash
+func (am *AuthModule) GeneratePeerHeader(ns []byte, cert []byte) ([]byte, error) {
+	hdr := bytes.Buffer{}
+	if len(am.perspectiveHash) != 34 {
+		panic(am.perspectiveHash)
+	}
+	//First: 34 byte entity hash
+	hdr.Write(am.perspectiveHash)
+	//Second: signature of cert
+	sigresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
+		Perspective: am.ourPerspective,
+		Content:     cert,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if sigresp.Error != nil {
+		return nil, errors.New(sigresp.Error.Message)
+	}
+	siglen := make([]byte, 2)
+	sig := sigresp.Signature
+	binary.LittleEndian.PutUint16(siglen, uint16(len(sig)))
+	hdr.Write(siglen)
+	hdr.Write(sig)
+	//Third: the namespace proof for this namespace
+	proof, ok := am.routingProofs[base64.URLEncoding.EncodeToString(ns)]
+	if !ok {
+		return nil, fmt.Errorf("we are not a DR for this namespace\n")
+	}
+	prooflen := make([]byte, 4)
+	binary.LittleEndian.PutUint32(prooflen, uint32(len(proof)))
+	hdr.Write(prooflen)
+	hdr.Write(proof)
+	return hdr.Bytes(), nil
 }

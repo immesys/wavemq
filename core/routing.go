@@ -82,10 +82,10 @@ type PeerConnection struct {
 }
 
 type DesignatedRouter struct {
-	Namespace      string
-	EntityHash     string
-	EntityLocation string
-	Address        string
+	Namespace string
+	//	EntityHash     string
+	//	EntityLocation string
+	Address string
 }
 type RoutingConfig struct {
 	//Our entity
@@ -226,7 +226,6 @@ func (t *Terminus) RouterID() string {
 }
 
 func (t *Terminus) Publish(m *pb.Message) {
-	fmt.Printf("publish called \n")
 	var clientlist []*subscription
 	ns := base64.URLEncoding.EncodeToString(m.Tbs.Namespace)
 	fullUri := ns + "/" + m.Tbs.Uri
@@ -260,7 +259,7 @@ func (t *Terminus) Publish(m *pb.Message) {
 			t.unsubscribeInternalID(sub.subid)
 		} else {
 			sub.q.Enqueue(m)
-			fmt.Printf("post enq length=%d (%p)\n", sub.q.length+sub.q.uncommittedLength, sub.q)
+			//fmt.Printf("post enq length=%d (%p)\n", sub.q.length+sub.q.uncommittedLength, sub.q)
 		}
 	}
 
@@ -435,7 +434,9 @@ func (t *Terminus) downstreamClient(namespace string) (*PeerConnection, error) {
 		if rtr == nil {
 			panic(rtr)
 		}
-		nc, err := grpc.Dial(rtr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+		nc, err := t.dialPeer(rtr.Address, namespace)
+		//
+		// nc, err := grpc.Dial(rtr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
 		if err != nil {
 			return nil, err
 		}
@@ -554,10 +555,17 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 	t.uplinkConnMu.Lock()
 	delete(t.uplinkConns, dr.Namespace)
 	t.uplinkConnMu.Unlock()
-	conn, err := grpc.Dial(dr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+
+	conn, err := t.dialPeer(dr.Address, dr.Namespace)
+	fmt.Printf("DIAL PEER COMPLETED: %v\n", err)
 	if err != nil {
 		return err
 	}
+	//
+	// conn, err := grpc.Dial(dr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+	// if err != nil {
+	// 	return err
+	// }
 	//Ensure that we always close the connection upon some kind of failure
 	defer func() {
 		e := recover()
@@ -583,29 +591,40 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 	//TODO rather have a pool of workers that send frames to the peer, using
 	//the returned pool size as an indication of how much can be sent
 	// iterate -> workers x[ send across -> dequeue on complete ]
-	for {
-		for {
-			m := q.Dequeue()
-			if m == nil {
-				break
+	const numWorkers = 12
+	errch := make(chan error, numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			for {
+				for {
+					if ctx.Err() != nil {
+						return
+					}
+					m := q.Dequeue()
+					if m == nil {
+						break
+					}
+					subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+					resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
+						Msg: m,
+					})
+					cancel()
+					if err != nil {
+						//Abort this connection and reconnect
+						errch <- err
+						return
+					}
+					if resp.Error != nil {
+						fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
+					}
+					//TODO use resp.sizes as mentioned above
+				}
+				//Wait until the queue is non empty
+				<-notify
 			}
-			subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
-				Msg: m,
-			})
-			cancel()
-			if err != nil {
-				//Abort this connection and reconnect
-				panic(err)
-			}
-			if resp.Error != nil {
-				fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
-			}
-			//TODO use resp.sizes as mentioned above
-		}
-		//Wait until the queue is non empty
-		<-notify
+		}()
 	}
+	return <-errch
 }
 
 func (t *Terminus) Query(namespace []byte, uri string) chan QueryElement {

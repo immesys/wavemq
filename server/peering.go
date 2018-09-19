@@ -35,7 +35,7 @@ func NewPeerServer(tm *core.Terminus, am *core.AuthModule, cfg *PeerServerConfig
 	if err != nil {
 		panic(err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.Creds(tm.ServerTransportCredentials()))
 	s := &peerServer{
 		tm:         tm,
 		am:         am,

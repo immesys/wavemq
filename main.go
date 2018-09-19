@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/BurntSushi/toml"
+	"github.com/immesys/wave/consts"
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wavemq/core"
 	"github.com/immesys/wavemq/server"
 	logging "github.com/op/go-logging"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var lg = logging.MustGetLogger("main")
@@ -36,6 +42,17 @@ func main() {
 		fmt.Printf("usage: wavemq config.toml\n")
 		os.Exit(1)
 	}
+
+	if os.Getenv("DEBUG") == "YES" {
+		go func() {
+			fmt.Println("==== PROFILING ENABLED ==========")
+			runtime.SetBlockProfileRate(5000)
+			http.Handle("/metrics", promhttp.Handler())
+			err := http.ListenAndServe("0.0.0.0:6060", nil)
+			panic(err)
+		}()
+	}
+
 	file := os.Args[1]
 	var conf Configuration
 	if _, err := toml.DecodeFile(file, &conf); err != nil {
@@ -43,6 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("configuration loaded\n")
+	consts.DefaultToUnrevoked = conf.WaveConfig.DefaultToUnrevoked
 
 	qm, err := core.NewQManager(&conf.QueueConfig)
 	if err != nil {

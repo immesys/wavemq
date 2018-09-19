@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/AndreasBriese/bbloom"
   packages = ["."]
-  revision = "28f7e881ca57bc00e028f9ede9f0d9104cfeef5e"
+  revision = "343706a395b76e5ca5c7dca46a5d937b48febc74"
 
 [[projects]]
   name = "github.com/BurntSushi/toml"
@@ -138,6 +138,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/huichen/murmur"
+  packages = ["."]
+  revision = "e0489551cf5116e27d7cc69d97a53cdbdd028acf"
+
+[[projects]]
+  branch = "master"
   name = "github.com/immesys/asn1"
   packages = ["."]
   revision = "9c0bf9b4b62c7890d88abc8d01939f0527060ca1"
@@ -160,7 +166,7 @@
     "waved",
     "wve"
   ]
-  revision = "fa48c23f5d09ce5dd69400536d9854e071afb217"
+  revision = "9c77de4d592210f7689683f0cbe6e8629312fe93"
 
 [[projects]]
   branch = "master"
@@ -286,8 +292,8 @@
     "trace/internal",
     "trace/tracestate"
   ]
-  revision = "b11f239c032624b045c4c2bfd3d1287b4012ce89"
-  version = "v0.16.0"
+  revision = "79993219becaa7e29e3b60cb67f5b8e82dee11d6"
+  version = "v0.17.0"
 
 [[projects]]
   branch = "master"
@@ -327,7 +333,7 @@
     "cpu",
     "unix"
   ]
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -358,7 +364,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "5a2fd4cab2d6d4a18e70c34937662526cd0c4bd1"
+  revision = "c3f76f3b92d1ffa4c58a9ff842a58b8877655e0f"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -402,6 +408,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8396f0f8e0f21d09abf18f59a59ae64a38c4d91b39fe25686bcf596dd174ea64"
+  inputs-digest = "b16c99bea58f1271d2ac873fc94c3dbf969f34ca37940851e7455c9ad13b52ec"
   solver-name = "gps-cdcl"
   solver-version = 1

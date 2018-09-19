@@ -38,34 +38,6 @@ func getqm(t testing.TB) *QManager {
 	return rv
 }
 
-func TestQueueInsert(t *testing.T) {
-	qm := getqm(t)
-	m := mkmsg()
-	q, err := qm.NewQ("helloworld")
-	require.NoError(t, err)
-	err = q.Enqueue(m)
-	require.NoError(t, err)
-	it := q.Dequeue()
-	require.Equal(t, it, m)
-}
-
-func BenchmarkHello(b *testing.B) {
-	qm := getqm(b)
-	m := mkmsg()
-	q, err := qm.GetQ("aq")
-	require.NoError(b, err)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		err := q.Enqueue(m)
-		q.Flush()
-		require.NoError(b, err)
-	}
-	for i := 0; i < b.N; i++ {
-		it := q.Dequeue()
-		require.NotNil(b, it)
-	}
-}
-
 func BenchmarkMessageSerialization(b *testing.B) {
 	m := mkmsg()
 	for i := 0; i < b.N; i++ {
