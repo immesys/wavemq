@@ -141,6 +141,8 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 			if it == nil {
 				break
 			}
+			it = pb.ShallowCloneMessageForDrops(it)
+			it.Drops = append(it.Drops, q.Drops())
 			err := s.am.CheckMessage(it)
 			if err != nil {
 				fmt.Printf("dropping message due to invalid proof\n")

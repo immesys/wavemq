@@ -170,7 +170,6 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 	}
 }
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
-	fmt.Printf("A LOCAL SUBSCRIBE REQUEST WAS RECEIVED\n")
 	if p.Expiry < 60 {
 		p.Expiry = 60
 	}
@@ -220,6 +219,8 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			if it == nil {
 				break
 			}
+			it = pb.ShallowCloneMessageForDrops(it)
+			it.Drops = append(it.Drops, q.Drops())
 			err := s.am.CheckMessage(it)
 			if err != nil {
 				lg.Infof("dropping message in subscribe %q due to invalid proof", it.Tbs.Uri)

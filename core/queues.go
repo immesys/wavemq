@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dgraph-io/badger"
@@ -728,6 +729,10 @@ func (q *Queue) Reset() error {
 	return q.reset()
 }
 
+func (q *Queue) Drops() int64 {
+	return atomic.LoadInt64(&q.drops)
+}
+
 //Removes all the data in the database pertaining to this queue. Does
 //not clear the datastructure for reuse (see reset for that)
 func (q *Queue) remove() error {
@@ -749,7 +754,6 @@ bulkerase:
 		it := txn.NewIterator(opts)
 		prefix := []byte(keyQueuePrefix(q.hdr.ID))
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			fmt.Printf("doing delete: %q\n", it.Item().Key())
 			err := txn.Delete(it.Item().Key())
 			if err == badger.ErrTxnTooBig {
 				it.Close()

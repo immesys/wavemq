@@ -226,6 +226,9 @@ func (t *Terminus) RouterID() string {
 }
 
 func (t *Terminus) Publish(m *pb.Message) {
+	//Append the initial routing time
+	m.Timestamps = append(m.Timestamps, time.Now().UnixNano())
+
 	var clientlist []*subscription
 	ns := base64.URLEncoding.EncodeToString(m.Tbs.Namespace)
 	fullUri := ns + "/" + m.Tbs.Uri
@@ -523,6 +526,7 @@ func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
 		if err != nil {
 			panic(err)
 		}
+		msg.Message.Timestamps = append(msg.Message.Timestamps, time.Now().UnixNano())
 		q.Enqueue(msg.Message)
 	}
 }
@@ -604,6 +608,9 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 					if m == nil {
 						break
 					}
+					m = pb.ShallowCloneMessageForDrops(m)
+					m.Drops = append(m.Drops, q.Drops())
+
 					subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 					resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
 						Msg: m,
