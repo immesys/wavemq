@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -211,6 +212,12 @@ func LoadQueueHeader(ser []byte) (*QueueHeader, error) {
 
 //Create a new queue manager with the given configuration
 func NewQManager(cfg *QManagerConfig) (*QManager, error) {
+	//Make the queue directory
+	err := os.MkdirAll(cfg.QueueDataStore, 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	//Open database
 	opts := badger.DefaultOptions
 	opts.Dir = cfg.QueueDataStore

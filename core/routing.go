@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -257,6 +258,12 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 	//ID
 	// "" -> local
 	// "something"
+
+	//Make the persist directory
+	err = os.MkdirAll(cfg.PersistDataStore, 0755)
+	if err != nil {
+		return nil, err
+	}
 
 	//Open the database
 	opts := badger.DefaultOptions
