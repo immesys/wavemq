@@ -92,4 +92,48 @@ TODO
 
 ## Getting started: creating a designated router
 
-TODO
+We assume you already have WAVE set up and running. To create a designated router, you first need to create a namespace:
+```bash
+wv mke -o namespace.ent --expiry 40y
+```
+
+Then you need to create an entity for your designated router:
+
+```bash
+wv mke -o router.ent --expiry 40y
+```
+
+Then you need to grant your router the permission to route on the namespace:
+
+```bash
+wv rtgrant --attester namespace.ent --subject router.ent --expiry 3y "wavemq:route@namespace.ent/*" 
+```
+
+Finally, you need to create the proof that the router will hand to peers:
+
+```bash
+wv rtprove --subject router.ent -o routerproof.pem "wavemq:route@namespace.ent/*"
+```
+
+Copy `router.ent` to `/etc/wavemq/router.ent` on the designated router. Also copy `routerproof.pem` to `/etc/wavemq/routerproof.pem`. Finally, to get the hash of the namespace for use in the config files, do:
+
+```bash
+wv inspect namespace.ent 
+```
+
+Which should give you something like:
+
+```
+= Entity
+      Hash: GyD0mVNZxmMcL5bFSWgZ59SrMYPcTZuJpXrXH3zY4wN4Xw==
+   Created: 2018-09-20 15:24:54 -0700 PDT
+   Expires: 2058-09-10 14:24:54 -0800 PST
+  Validity:
+   - Valid: true
+   - Expired: false
+   - Malformed: false
+   - Revoked: false
+   - Message: 
+```
+
+
