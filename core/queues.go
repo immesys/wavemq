@@ -13,6 +13,7 @@ import (
 	"github.com/dgraph-io/badger"
 	"github.com/golang/protobuf/proto"
 	pb "github.com/immesys/wavemq/mqpb"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 //If a short queue is dequeued less than this amount of time ago
@@ -24,6 +25,41 @@ const IdleFlushTime = 10 * time.Second
 //of the idle flush time. This allows queues attached to consumers that
 //are active but lagging to be flushed when they get too deep.
 const IdleFlushSize = 1000
+
+//Some instrumentation
+var pmDroppedMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "queue",
+	Name:      "dropped_messages",
+	Help:      "Dropped messages due to full queues",
+})
+var pmCommittedMessages = prometheus.NewGauge(prometheus.GaugeOpts{
+	Subsystem: "queue",
+	Name:      "committed_messages",
+	Help:      "Number of messages in disk buffers",
+})
+var pmQueuedMessages = prometheus.NewGauge(prometheus.GaugeOpts{
+	Subsystem: "queue",
+	Name:      "queued_messages",
+	Help:      "Number of messages in queues",
+})
+var pmQueuedBytes = prometheus.NewGauge(prometheus.GaugeOpts{
+	Subsystem: "queue",
+	Name:      "queued_bytes",
+	Help:      "Number of bytes in queues",
+})
+var pmNumQueues = prometheus.NewGauge(prometheus.GaugeOpts{
+	Subsystem: "queue",
+	Name:      "number",
+	Help:      "Number of queues",
+})
+
+func init() {
+	prometheus.MustRegister(pmDroppedMessages)
+	prometheus.MustRegister(pmCommittedMessages)
+	prometheus.MustRegister(pmQueuedMessages)
+	prometheus.MustRegister(pmQueuedBytes)
+	prometheus.MustRegister(pmNumQueues)
+}
 
 //A Queue Manager keeps track of all open queues and is responsible for
 //the database backing the queues
@@ -247,6 +283,7 @@ func (qm *QManager) NewQ(id ID) (*Queue, error) {
 	}
 	q.reset()
 	qm.qz[id] = q
+	pmNumQueues.Set(float64(len(qm.qz)))
 	return q, nil
 }
 
@@ -260,6 +297,19 @@ func (qm *QManager) GetQ(id ID) (*Queue, error) {
 		return q, nil
 	}
 	return qm.NewQ(id)
+}
+
+//Destroy a queue and remove it from the map
+func (qm *QManager) Remove(id ID) {
+	//Return an existing queue
+	qm.qzmu.Lock()
+	q, ok := qm.qz[id]
+	delete(qm.qz, id)
+	pmNumQueues.Set(float64(len(qm.qz)))
+	qm.qzmu.Unlock()
+	if ok {
+		q.Destroy()
+	}
 }
 
 //Restores the queue in-memory states from disk
@@ -323,7 +373,7 @@ func (qm *QManager) recover() error {
 		for _, q := range qm.qz {
 			fmt.Printf("recovered queue %s (length=%d)\n", q.ID(), q.length)
 		}
-
+		pmNumQueues.Set(float64(len(qm.qz)))
 		return nil
 	})
 }
@@ -515,7 +565,7 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 	for {
 		if ((q.uncommittedSize + q.size) > 0) && ((q.uncommittedSize+q.size+int64(sz) > q.hdr.MaxSize) ||
 			(q.uncommittedLength+q.length+1 > q.hdr.MaxLength)) {
-			fmt.Printf("dropping message\n")
+			pmDroppedMessages.Add(1)
 			q.dequeue()
 			q.drops++
 			continue
@@ -543,6 +593,8 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 	}
 	q.uncommitedTail = it
 	q.uncommittedSize += int64(sz)
+	pmQueuedBytes.Add(float64(sz))
+	pmQueuedMessages.Add(1)
 	q.uncommittedLength++
 	q.ck()
 	if mustnotify {
@@ -619,6 +671,7 @@ func (q *Queue) GC() error {
 	}
 	txn := q.mgr.db.NewTransaction(true)
 	for _, e := range togc {
+		pmCommittedMessages.Add(-1)
 		err := txn.Delete([]byte(e))
 		if err == badger.ErrTxnTooBig {
 			err := txn.Commit(nil)
@@ -706,6 +759,7 @@ bulkflush:
 			} else if err != nil {
 				return err
 			}
+			pmCommittedMessages.Add(1)
 			it = nextit
 		}
 		break
@@ -839,7 +893,10 @@ func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
 		q.tail.Next = it
 	}
 	q.tail = it
-	q.size += int64(proto.Size(m))
+	sz := proto.Size(m)
+	q.size += int64(sz)
+	pmQueuedBytes.Add(float64(sz))
+	pmQueuedMessages.Add(1)
 	q.length++
 	return nil
 }
@@ -863,7 +920,10 @@ func (q *Queue) dequeue() *pb.Message {
 			q.head = q.head.Next
 		}
 		q.togc = append(q.togc, keyQueueItem(q.hdr.ID, it.Index))
-		q.size -= int64(proto.Size(it.Content))
+		sz := proto.Size(it.Content)
+		q.size -= int64(sz)
+		pmQueuedBytes.Add(-float64(sz))
+		pmQueuedMessages.Add(-1)
 		q.length--
 		return it.Content
 	}
@@ -876,7 +936,10 @@ func (q *Queue) dequeue() *pb.Message {
 	if q.uncommitedHead == nil {
 		q.uncommitedTail = nil
 	}
-	q.uncommittedSize -= int64(proto.Size(it.Content))
+	sz := proto.Size(it.Content)
+	q.uncommittedSize -= int64(sz)
+	pmQueuedBytes.Add(-float64(sz))
+	pmQueuedMessages.Add(-1)
 	q.uncommittedLength--
 	return it.Content
 }

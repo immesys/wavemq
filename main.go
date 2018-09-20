@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"net/http"
@@ -43,15 +42,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if os.Getenv("DEBUG") == "YES" {
-		go func() {
-			fmt.Println("==== PROFILING ENABLED ==========")
-			runtime.SetBlockProfileRate(5000)
-			http.Handle("/metrics", promhttp.Handler())
-			err := http.ListenAndServe("0.0.0.0:6060", nil)
-			panic(err)
-		}()
-	}
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		panic(err)
+	}()
 
 	file := os.Args[1]
 	var conf Configuration

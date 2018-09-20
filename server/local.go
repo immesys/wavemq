@@ -12,48 +12,53 @@ import (
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
 	logging "github.com/op/go-logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
 var lg = logging.MustGetLogger("main")
 
-// On the roles of this daemon.
-// A running wavemq daemon can be in a bunch of different roles:
-// - A designated router: there is only one per namespace and it should
-//   be running somewhere with good internet connectivity. This is the
-//   canonical location of persisted messages and all published messages
-//   will be delivered here
-// - A local router. This is part of the namespace and must be authorized
-//   by the namespace entity. Subscription and publish requests will be
-//   validated here, enabling local autonomous function if connectivity
-//   to the DR is down
-// Future work:
-// - An agent. This will generate proofs for pub/sub and forward these
-//   to either an LR or a DR. This does not perform local routing but
-//   allows for clients to not have to send their private keys to the
-//   LR or DR.
+//Some instrumentation
+var pmFailedFormMessage = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_form_message",
+	Help:      "Number of messages that could not build a proof",
+})
+var pmFailedFormQuery = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_form_query",
+	Help:      "Number of query ops that could not build a proof",
+})
+var pmFailedFormSubscribe = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_form_subscribe",
+	Help:      "Number of subscribe ops that could not build a proof",
+})
+var pmLinkDownQuery = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_linkdown_query",
+	Help:      "Number of query ops that failed to to uplink down",
+})
+var pmFailedProofs = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_incoming_proof",
+	Help:      "Number of subscribe/query messages dropped due to bad proofs",
+})
+var pmFailedDecryption = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "localserver",
+	Name:      "failed_incoming_decryption",
+	Help:      "Number of subscribe/query messages dropped due to failed decryption",
+})
 
-//OR
+func init() {
+	prometheus.MustRegister(pmFailedFormMessage)
+	prometheus.MustRegister(pmFailedFormQuery)
+	prometheus.MustRegister(pmFailedFormSubscribe)
+	prometheus.MustRegister(pmLinkDownQuery)
+	prometheus.MustRegister(pmFailedProofs)
+	prometheus.MustRegister(pmFailedDecryption)
+}
 
-//- Designated router, all traffic goes here, same as before. The DR
-//  will re-validate the proofs of all published messages and requires
-//  proofs for every subscription.
-//- Local Router / Agent combo: you give it your entity but it is
-//  not a trusted part of the namespace. To "bridge" with the DR
-//  it carefully uses subscription proofs furnished by client entities
-//  that are subscribing (but still only uses one if there is a duplicate
-//  subscription). Having access to the private keys of the entities
-//  doing the subscription, it can also generate a signature of some
-//  ephemeral session token with the bridged router to ensure no
-//  replay of the subscription message.
-
-//Checklist:
-
-// Implement AuthModule methods
-// Local pub/sub should work
-// Implement peer subscription in terminus
-// Implement * to DR in terminus
-// agent -> dr -> agent should work
 type srv struct {
 	tm         *core.Terminus
 	am         *core.AuthModule
@@ -98,6 +103,7 @@ func NewLocalServer(tm *core.Terminus, am *core.AuthModule, cfg *LocalServerConf
 func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResponse, error) {
 	m, err := s.am.FormMessage(p, s.tm.RouterID())
 	if err != nil {
+		pmFailedFormMessage.Add(1)
 		return &pb.PublishResponse{
 			Error: ToError(err),
 		}, nil
@@ -109,6 +115,7 @@ func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResp
 func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 	qm, err := s.am.FormQueryRequest(p, s.tm.RouterID())
 	if err != nil {
+		pmFailedFormQuery.Add(1)
 		r.Send(&pb.QueryMessage{
 			Error: ToError(err),
 		})
@@ -118,6 +125,7 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 	nsString := base64.URLEncoding.EncodeToString(p.Namespace)
 	drconn := s.tm.GetDesignatedRouterConnection(nsString)
 	if drconn == nil {
+		pmLinkDownQuery.Add(1)
 		r.Send(&pb.QueryMessage{
 			Error: ToError(wve.Err(core.DesignatedRouterLinkDown, "could not query: designated router link down")),
 		})
@@ -137,7 +145,9 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 		if err == io.EOF {
 			return nil
 		}
-		//TODO handle other errors
+		if err != nil {
+			return err
+		}
 		if msg.Error != nil {
 			r.Send(&pb.QueryMessage{
 				Error: ToError(wve.Err(core.UpstreamError, "could not query: "+msg.Error.Message)),
@@ -152,6 +162,7 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 		//Validate the message
 		err = s.am.CheckMessage(msg.Message)
 		if err != nil {
+			pmFailedProofs.Add(1)
 			lg.Info("dropping query message: %v", err)
 			continue
 		}
@@ -159,6 +170,7 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 		//prepare message
 		pmsg, err := s.am.PrepareMessage(p.Perspective, msg.Message)
 		if err != nil {
+			pmFailedDecryption.Add(1)
 			lg.Info("dropping query message: %v", err)
 			continue
 		}
@@ -175,6 +187,7 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 	}
 	sub, err := s.am.FormSubRequest(p, s.tm.RouterID())
 	if err != nil {
+		pmFailedFormSubscribe.Add(1)
 		lg.Infof("failed to subscribe to %q: %s", p.Uri, err)
 		r.Send(&pb.SubscriptionMessage{
 			Error: ToError(err),
@@ -223,12 +236,14 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 			it.Drops = append(it.Drops, q.Drops())
 			err := s.am.CheckMessage(it)
 			if err != nil {
+				pmFailedProofs.Add(1)
 				lg.Infof("dropping message in subscribe %q due to invalid proof", it.Tbs.Uri)
 				continue
 			}
 
 			it, err = s.am.PrepareMessage(p.Perspective, it)
 			if err != nil {
+				pmFailedDecryption.Add(1)
 				lg.Info("dropping message in subscribe %q: could not prepare: %v", it.Tbs.Uri, err.Reason())
 				continue
 			}

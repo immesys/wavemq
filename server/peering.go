@@ -9,14 +9,32 @@ import (
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
-// Implement AuthModule methods
-// Local pub/sub should work
-// Implement peer subscription in terminus
-// Implement * to DR in terminus
-// agent -> dr -> agent should work
+//Some instrumentation
+var pmFailedQuery = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "peerserver",
+	Name:      "failed_query",
+	Help:      "Number of query requests that failed proof",
+})
+var pmFailedSubscribe = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "peerserver",
+	Name:      "failed_subscribe",
+	Help:      "Number of subscribe requests that failed proof",
+})
+var pmFailedPublish = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "peerserver",
+	Name:      "failed_publish",
+	Help:      "Number of publish requests that failed proof",
+})
+
+func init() {
+	prometheus.MustRegister(pmFailedQuery)
+	prometheus.MustRegister(pmFailedSubscribe)
+	prometheus.MustRegister(pmFailedPublish)
+}
 
 type peerServer struct {
 	tm         *core.Terminus
@@ -49,6 +67,7 @@ func NewPeerServer(tm *core.Terminus, am *core.AuthModule, cfg *PeerServerConfig
 func (s *peerServer) PeerQueryRequest(p *pb.PeerQueryParams, r pb.WAVEMQPeering_PeerQueryRequestServer) error {
 	err := s.am.CheckQuery(p)
 	if err != nil {
+		pmFailedQuery.Add(1)
 		r.Send(&pb.QueryMessage{
 			Error: ToError(err),
 		})
@@ -81,6 +100,7 @@ func (s *peerServer) PeerQueryRequest(p *pb.PeerQueryParams, r pb.WAVEMQPeering_
 func (s *peerServer) PeerPublish(ctx context.Context, p *pb.PeerPublishParams) (*pb.PeerPublishResponse, error) {
 	err := s.am.CheckMessage(p.Msg)
 	if err != nil {
+		pmFailedPublish.Add(1)
 		return &pb.PeerPublishResponse{
 			Error: ToError(err),
 		}, nil
@@ -91,6 +111,7 @@ func (s *peerServer) PeerPublish(ctx context.Context, p *pb.PeerPublishParams) (
 func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering_PeerSubscribeServer) error {
 	err := s.am.CheckSubscription(p)
 	if err != nil {
+		pmFailedSubscribe.Add(1)
 		senderr := r.Send(&pb.SubscriptionMessage{
 			Error: ToError(err),
 		})
@@ -143,11 +164,11 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 			}
 			it = pb.ShallowCloneMessageForDrops(it)
 			it.Drops = append(it.Drops, q.Drops())
-			err := s.am.CheckMessage(it)
-			if err != nil {
-				fmt.Printf("dropping message due to invalid proof\n")
-				continue
-			}
+			// err := s.am.CheckMessage(it)
+			// if err != nil {
+			// 	fmt.Printf("dropping message due to invalid proof\n")
+			// 	continue
+			// }
 			//We don't prepare messages sent to peers
 			// m, err := s.am.PrepareMessage(p, m)
 			// if err != nil {

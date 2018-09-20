@@ -13,9 +13,63 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/immesys/wave/wve"
 	pb "github.com/immesys/wavemq/mqpb"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/crypto/sha3"
 	"google.golang.org/grpc"
 )
+
+//Some instrumentation
+var pmPublishedMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "published_messages",
+	Help:      "Number of messages coming into the router",
+})
+var pmEnqueuedMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "enqueued_messages",
+	Help:      "Number of messages flowing out of the router",
+})
+var pmDownstreamMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "downstream_messages",
+	Help:      "Number of messages from downstream peering",
+})
+var pmUpstreamMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "upstream_messages",
+	Help:      "Number of messages delivered upstream",
+})
+var pmPeerErrors = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "peer_errors",
+	Help:      "Number of peer connection errors",
+})
+var pmSubscriptions = prometheus.NewGauge(prometheus.GaugeOpts{
+	Subsystem: "route",
+	Name:      "active_subscriptions",
+	Help:      "Number of active subscriptions",
+})
+var pmPersistedMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "persisted_messages",
+	Help:      "Number of messages persisted",
+})
+var pmQueriedMessages = prometheus.NewCounter(prometheus.CounterOpts{
+	Subsystem: "route",
+	Name:      "queried_messages",
+	Help:      "Number of persisted messages queried",
+})
+
+func init() {
+	prometheus.MustRegister(pmPublishedMessages)
+	prometheus.MustRegister(pmEnqueuedMessages)
+	prometheus.MustRegister(pmDownstreamMessages)
+	prometheus.MustRegister(pmUpstreamMessages)
+	prometheus.MustRegister(pmPeerErrors)
+	prometheus.MustRegister(pmSubscriptions)
+	prometheus.MustRegister(pmPersistedMessages)
+	prometheus.MustRegister(pmQueriedMessages)
+}
 
 type ID string
 type subscription struct {
@@ -152,7 +206,7 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 			_, ok := rv.namespaces[q.GetRecipientID()]
 			if !ok {
 				//This is a router that was removed
-				q.Destroy()
+				qm.Remove(q.ID())
 				continue
 			}
 			foundRouters[q.GetRecipientID()] = id
@@ -226,6 +280,7 @@ func (t *Terminus) RouterID() string {
 }
 
 func (t *Terminus) Publish(m *pb.Message) {
+	pmPublishedMessages.Add(1)
 	//Append the initial routing time
 	m.Timestamps = append(m.Timestamps, time.Now().UnixNano())
 
@@ -261,6 +316,7 @@ func (t *Terminus) Publish(m *pb.Message) {
 		if sub.q.Ctx.Err() != nil {
 			t.unsubscribeInternalID(sub.subid)
 		} else {
+			pmEnqueuedMessages.Add(1)
 			sub.q.Enqueue(m)
 			//fmt.Printf("post enq length=%d (%p)\n", sub.q.length+sub.q.uncommittedLength, sub.q)
 		}
@@ -272,6 +328,7 @@ func (t *Terminus) Publish(m *pb.Message) {
 		if err != nil {
 			panic(err)
 		}
+		pmPersistedMessages.Add(1)
 		t.putMessage(fullUri, serial)
 	}
 }
@@ -288,22 +345,22 @@ func (t *Terminus) unsubscribeInternalID(subid ID) wve.WVE {
 		t.rstree_lock.Unlock()
 		return wve.Err(NoSuchSubscription, "no such subscription exists")
 	}
-	toTerm := []*subscription{}
 
 	next := node.copy()
 	//Erase the subscription itself
+	sub := next.subz[subid]
 	delete(next.subz, subid)
 	node.v.Store(*next)
 	//Remove it from the reverse lookup
 	delete(t.rstree, subid)
+	pmSubscriptions.Set(float64(len(t.rstree)))
 
 	t.rstree_lock.Unlock()
 
-	for _, tt := range toTerm {
-		//This will cancel the queue context, which should cause consumers
-		//to stop consuming
-		tt.q.Destroy()
-	}
+	//This will cancel the queue context, which should cause consumers
+	//to stop consuming
+	t.qm.Remove(sub.q.ID())
+
 	return nil
 }
 
@@ -389,6 +446,7 @@ func (tm *Terminus) addSub(topic string, s *subscription) {
 	node := tm.stree.addSub(parts, s)
 	tm.rstree_lock.Lock()
 	tm.rstree[s.subid] = node
+	pmSubscriptions.Set(float64(len(tm.rstree)))
 	tm.rstree_lock.Unlock()
 }
 
@@ -482,6 +540,7 @@ func (t *Terminus) beginDownstreamPeering(q *Queue) {
 		//This way when we unsubscribe this downstream peering will die too
 		ctx, cancel := context.WithCancel(q.Ctx)
 		err := t.downstreamPeer(ctx, q)
+		pmPeerErrors.Add(1)
 		fmt.Printf("downstream peering error %v\n", err)
 		cancel()
 		if q.Ctx.Err() != nil {
@@ -527,6 +586,7 @@ func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
 			panic(err)
 		}
 		msg.Message.Timestamps = append(msg.Message.Timestamps, time.Now().UnixNano())
+		pmDownstreamMessages.Add(1)
 		q.Enqueue(msg.Message)
 	}
 }
@@ -537,6 +597,7 @@ func (t *Terminus) beginUpstreamPeering(q *Queue, dr *DesignatedRouter) {
 		ctx, cancel := context.WithCancel(context.Background())
 		err := t.upstreamPeer(ctx, q, dr)
 		cancel()
+		pmPeerErrors.Add(1)
 		fmt.Printf("error peering with %s (%s): %v\n", dr.Namespace, dr.Address, err)
 		time.Sleep(30 * time.Second)
 	}
@@ -612,6 +673,7 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 					m.Drops = append(m.Drops, q.Drops())
 
 					subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+					pmUpstreamMessages.Add(1)
 					resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
 						Msg: m,
 					})
@@ -648,6 +710,7 @@ func (t *Terminus) Query(namespace []byte, uri string) chan QueryElement {
 				fmt.Printf("failed to unmarshal proto message from persist: %v\n", err)
 				continue
 			}
+			pmQueriedMessages.Add(1)
 			rv <- QueryElement{Msg: &m}
 		}
 		close(rv)
