@@ -54,6 +54,7 @@ Create the configuration file `/etc/wavemq/wavemq.toml` with the following conte
 
 [RoutingConfig]
   PersistDataStore = "/var/lib/wavemq/queue"
+  # This will be created for you
   RouterEntityFile = "/etc/wavemq/router.ent"
   [[RoutingConfig.Router]]
     Namespace = "the namespace you are interacting with"
