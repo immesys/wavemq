@@ -70,6 +70,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	time.Sleep(2 * time.Second)
 }
 
 func subscribe(client mqpb.WAVEMQClient, perspective []byte) {
