@@ -135,5 +135,49 @@ Which should give you something like:
    - Revoked: false
    - Message: 
 ```
+That hash will need to appear in site router config files. Finally, you can now create the config file for the designated router `/etc/wavemq/wavemq.toml` with the following:
 
+```toml
+[WaveConfig]
+  database = "/var/lib/wavemq/wave"
+  defaultToUnrevoked = true
 
+  [WaveConfig.storage]
+    # This is the default HTTPS server
+    [WaveConfig.storage.default]
+    provider = "http_v1"
+    url = "https://standalone.storage.bwave.io/v1"
+    version = "1"
+
+[QueueConfig]
+  queueDataStore = "/var/lib/wavemq/queue"
+  # This is one day in seconds
+  queueExpiry = 86400
+  # 1000 items
+  subscriptionQueueMaxLength = 10000
+  # 100MB
+  subscriptionQueueMaxSize = 100
+  # 10k items
+  trunkingQueueMaxLength = 100000
+  # 1GB
+  trunkingQueueMaxSize = 3000
+  # 30 seconds
+  flushInterval = 30
+
+[LocalConfig]
+  # bind this to localhost to prevent clients from connecting directly.
+  # they must only connect through a site router
+  listenAddr = "127.0.0.1:4516"
+
+[PeerConfig]
+  listenAddr = "0.0.0.0:4515"
+
+[RoutingConfig]
+  PersistDataStore = "/var/lib/wavemq/queue"
+  RouterEntityFile = "/etc/wavemq/router.ent"
+  DesignatedNamespaceFiles = [
+    "/etc/wavemq/routerproof.pem",
+  ]
+ ```
+ 
+ Create the systemd unit file as in the site router section, and start the service.
