@@ -12,6 +12,7 @@ import (
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
 	logging "github.com/op/go-logging"
+	"github.com/pborman/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
@@ -184,6 +185,9 @@ func (s *srv) Query(p *pb.QueryParams, r pb.WAVEMQ_QueryServer) error {
 func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) error {
 	if p.Expiry < 60 {
 		p.Expiry = 60
+	}
+	if p.Identifier == "" {
+		p.Identifier = uuid.NewRandom().String()
 	}
 	sub, err := s.am.FormSubRequest(p, s.tm.RouterID())
 	if err != nil {

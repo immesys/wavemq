@@ -55,6 +55,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("configuration loaded\n")
+
 	consts.DefaultToUnrevoked = conf.WaveConfig.DefaultToUnrevoked
 
 	qm, err := core.NewQManager(&conf.QueueConfig)
