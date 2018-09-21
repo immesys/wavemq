@@ -88,7 +88,19 @@ You can now start wavemq with `sudo sytemctl daemon-reload; sudo systemctl start
 
 ## Getting started: using the site router
 
-TODO
+First you need to create an entity for the service that will be connecting to the site router:
+
+```bash
+wv mke -o service.ent --expiry 1y
+```
+
+Then grant permissions from your namespace to your service entity:
+
+```bash
+wv rtgrant --attester namespace.ent --subject service.ent --expiry 1y "wavemq:subscribe,publish,query@namespace.ent/*"
+```
+
+Then you follow [the example](https://github.com/immesys/wavemq/tree/master/example) and fill in the namespace hash and entity file you are using. If you run the example, it should print out hello world five times then exit.
 
 ## Getting started: creating a designated router
 
