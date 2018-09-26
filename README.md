@@ -53,7 +53,7 @@ Create the configuration file `/etc/wavemq/wavemq.toml` with the following conte
   listenAddr = "127.0.0.1:4515"
 
 [RoutingConfig]
-  PersistDataStore = "/var/lib/wavemq/queue"
+  PersistDataStore = "/var/lib/wavemq/persist"
   # This will be created for you
   RouterEntityFile = "/etc/wavemq/router.ent"
   [[RoutingConfig.Router]]
@@ -185,7 +185,7 @@ That hash will need to appear in site router config files. Finally, you can now 
   listenAddr = "0.0.0.0:4515"
 
 [RoutingConfig]
-  PersistDataStore = "/var/lib/wavemq/queue"
+  PersistDataStore = "/var/lib/wavemq/persist"
   RouterEntityFile = "/etc/wavemq/router.ent"
   DesignatedNamespaceFiles = [
     "/etc/wavemq/routerproof.pem",
