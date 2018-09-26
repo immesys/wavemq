@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "bitbucket.org/creachadair/cityhash"
+  packages = ["."]
+  revision = "0d1506f40c89df1b983c65d94162627c41a330a4"
+
+[[projects]]
+  branch = "master"
   name = "github.com/AndreasBriese/bbloom"
   packages = ["."]
   revision = "343706a395b76e5ca5c7dca46a5d937b48febc74"
@@ -10,8 +16,20 @@
 [[projects]]
   name = "github.com/BurntSushi/toml"
   packages = ["."]
-  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
-  version = "v0.3.0"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+
+[[projects]]
+  name = "github.com/cloudflare/cfssl"
+  packages = ["log"]
+  revision = "5d63dbd981b5c408effbb58c442d54761ff94fbd"
+  version = "1.3.2"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -29,8 +47,8 @@
     "table",
     "y"
   ]
-  revision = "391b6d3b93e6014fe8c2971fcc0c1266e47dbbd9"
-  version = "v1.5.3"
+  revision = "99233d725dbdd26d156c61b2f42ae1671b794656"
+  version = "v1.5.4"
 
 [[projects]]
   branch = "master"
@@ -41,8 +59,8 @@
 [[projects]]
   name = "github.com/ethereum/go-ethereum"
   packages = ["crypto/sha3"]
-  revision = "89451f7c382ad2185987ee369f16416f89c28a7d"
-  version = "v1.8.15"
+  revision = "477eb0933b9529f7deeccc233cc815fe34a8ea56"
+  version = "v1.8.16"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -146,7 +164,7 @@
   branch = "master"
   name = "github.com/immesys/asn1"
   packages = ["."]
-  revision = "9c0bf9b4b62c7890d88abc8d01939f0527060ca1"
+  revision = "00c41edb4634c480e27d634cd74c5989b1f746d8"
 
 [[projects]]
   branch = "master"
@@ -166,7 +184,13 @@
     "waved",
     "wve"
   ]
-  revision = "9c77de4d592210f7689683f0cbe6e8629312fe93"
+  revision = "65e5400589246c498e47d47ce132bed6cc2fd599"
+
+[[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -184,7 +208,7 @@
   branch = "master"
   name = "github.com/mr-tron/base58"
   packages = ["base58"]
-  revision = "f84df45a6b88974a98d1473e9f0de0eac859a3d9"
+  revision = "9ad991d48a423a0e52c77eac173b1b589665492a"
 
 [[projects]]
   name = "github.com/multiformats/go-multihash"
@@ -221,6 +245,42 @@
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = [
+    "prometheus",
+    "prometheus/promhttp"
+  ]
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model"
+  ]
+  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [
+    ".",
+    "internal/util",
+    "nfs",
+    "xfs"
+  ]
+  revision = "418d78d0b9a7b7de3a6bbc8a23def624cc977bb2"
 
 [[projects]]
   name = "github.com/spaolacci/murmur3"
@@ -324,7 +384,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "f04abc6bdfa7a0171a8a0c9fd2ada9391044d056"
 
 [[projects]]
   branch = "master"
@@ -333,7 +393,7 @@
     "cpu",
     "unix"
   ]
-  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
+  revision = "b09afc3d579e346c4a7e4705953acaf6f9e551bd"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -364,7 +424,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "c3f76f3b92d1ffa4c58a9ff842a58b8877655e0f"
+  revision = "0e822944c569bf5c9afd034adaa56208bd2906ac"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -408,6 +468,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b16c99bea58f1271d2ac873fc94c3dbf969f34ca37940851e7455c9ad13b52ec"
+  inputs-digest = "a7c735fc24e3a6d26dd0e94cdd9790bd352c7cf0e740a51722371e62ae81d638"
   solver-name = "gps-cdcl"
   solver-version = 1

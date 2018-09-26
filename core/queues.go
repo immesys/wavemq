@@ -78,6 +78,19 @@ type QManager struct {
 
 //A queue is used to back a subscription, or a trunking (peering) link
 type Queue struct {
+	//Take care to keep 64 bit integers aligned to 64 bits for arm
+
+	//The length/size of the committed portion of the queue
+	length int64
+	size   int64
+
+	//How many records were dropped due to the queue being full
+	drops int64
+
+	//The length/size of the uncommitted portion of the queue
+	uncommittedLength int64
+	uncommittedSize   int64
+
 	//The mutex must be explictly locked before calling any private function
 	//on the queue object
 	mu sync.Mutex
@@ -91,17 +104,6 @@ type Queue struct {
 	//When the index is changed, the header is asynchronously flushed
 	//to the database. This flush happens if this flag is true
 	hdrChanged bool
-
-	//The length/size of the committed portion of the queue
-	length int64
-	size   int64
-
-	//How many records were dropped due to the queue being full
-	drops int64
-
-	//The length/size of the uncommitted portion of the queue
-	uncommittedLength int64
-	uncommittedSize   int64
 
 	//A list of keys that should be deleted from the db. This is added to
 	//whenever a commited entry is dequeued.
@@ -312,9 +314,11 @@ func (qm *QManager) Remove(id ID) {
 	qm.qzmu.Lock()
 	q, ok := qm.qz[id]
 	delete(qm.qz, id)
-	pmNumQueues.Set(float64(len(qm.qz)))
 	qm.qzmu.Unlock()
 	if ok {
+		pmQueuedMessages.Add(-float64((q.length + q.uncommittedLength)))
+		pmQueuedBytes.Add(-float64((q.size + q.uncommittedSize)))
+		pmNumQueues.Set(float64(len(qm.qz)))
 		q.Destroy()
 	}
 }
@@ -810,6 +814,8 @@ func (q *Queue) remove() error {
 bulkerase:
 	for {
 		txn := q.mgr.db.NewTransaction(true)
+		//Required on RPI
+		//opts.ValueLogLoadingMode = options.FileIO
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		it := txn.NewIterator(opts)
@@ -827,6 +833,7 @@ bulkerase:
 				it.Close()
 				return err
 			}
+			pmCommittedMessages.Add(-1)
 		}
 		it.Close()
 		break
