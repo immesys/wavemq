@@ -314,11 +314,9 @@ func (qm *QManager) Remove(id ID) {
 	qm.qzmu.Lock()
 	q, ok := qm.qz[id]
 	delete(qm.qz, id)
+	pmNumQueues.Set(float64(len(qm.qz)))
 	qm.qzmu.Unlock()
 	if ok {
-		pmQueuedMessages.Add(-float64((q.length + q.uncommittedLength)))
-		pmQueuedBytes.Add(-float64((q.size + q.uncommittedSize)))
-		pmNumQueues.Set(float64(len(qm.qz)))
 		q.Destroy()
 	}
 }
@@ -453,10 +451,15 @@ func (qm *QManager) bgTasks() {
 				q.mu.Unlock()
 			}
 		}
+
+		qm.qzmu.Lock()
 		for _, q := range toremove {
 			delete(qm.qz, q)
 		}
+		pmNumQueues.Set(float64(len(qm.qz)))
+		qm.qzmu.Unlock()
 	}
+
 }
 
 //Subscribe for notifications when the queue transitions from empty to
@@ -808,6 +811,9 @@ func (q *Queue) remove() error {
 		txn.Delete(hdrprefix)
 		return nil
 	})
+
+	pmQueuedMessages.Add(-float64((q.length + q.uncommittedLength)))
+	pmQueuedBytes.Add(-float64((q.size + q.uncommittedSize)))
 
 	//Transactions are limited in size. Be prepared to break up into lots
 	//of smaller transactions if there are a lot of records to delete

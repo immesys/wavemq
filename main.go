@@ -44,7 +44,12 @@ func main() {
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		metricsAddr := "127.0.0.1:6060"
+		if os.Getenv("METRICS_ADDRESS") != "" {
+			metricsAddr = os.Getenv("METRICS_ADDRESS")
+		}
+		fmt.Printf("starting metrics on %q\n", metricsAddr)
+		err := http.ListenAndServe(metricsAddr, nil)
 		panic(err)
 	}()
 
