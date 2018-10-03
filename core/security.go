@@ -199,7 +199,6 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 			DER: contents,
 		},
 	}
-
 	//Check perspective is okay by doing a resync
 	resp, err := am.wave.ResyncPerspectiveGraph(context.Background(), &eapipb.ResyncPerspectiveGraphParams{
 		Perspective: am.ourPerspective,
@@ -210,7 +209,6 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 	if resp.Error != nil {
 		return fmt.Errorf("could not sync router entity file: %v", resp.Error.Message)
 	}
-
 	//Wait for sync, for the fun of it
 	err = am.wave.WaitForSyncCompleteHack(&eapipb.SyncParams{
 		Perspective: am.ourPerspective,
@@ -218,7 +216,6 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 	if err != nil {
 		return fmt.Errorf("could not sync router entity file: %v", err)
 	}
-
 	//also inspect so we can learn our hash
 	iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
 		Content: contents,
@@ -230,7 +227,6 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 		return fmt.Errorf("could not inspect router entity file: %v", resp.Error.Message)
 	}
 	am.perspectiveHash = iresp.Entity.Hash
-
 	return nil
 }
 
@@ -666,6 +662,27 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		return nil, wve.Err(wve.InvalidParameter, "missing perspective")
 	}
 
+	perspectiveHash := murmur.Murmur3(p.Perspective.EntitySecret.DER)
+	am.phashcachemu.RLock()
+	realhash, ok := am.phashcache[perspectiveHash]
+	am.phashcachemu.RUnlock()
+	if !ok {
+		//We need our entity hash
+		iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
+			Content: p.Perspective.EntitySecret.DER,
+		})
+		if err != nil {
+			return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
+		}
+		if iresp.Error != nil {
+			return nil, wve.Err(wve.NoProofFound, "failed validate perspective: "+iresp.Error.Message)
+		}
+		am.phashcachemu.Lock()
+		am.phashcache[perspectiveHash] = iresp.Entity.Hash
+		am.phashcachemu.Unlock()
+		realhash = iresp.Entity.Hash
+	}
+
 	hash := sha3.New256()
 	hash.Write(p.Namespace)
 	hash.Write([]byte(p.Uri))
@@ -680,16 +697,6 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		},
 	}
 
-	iresp, err := am.wave.Inspect(context.Background(), &eapipb.InspectParams{
-		Content: p.Perspective.EntitySecret.DER,
-	})
-	if err != nil {
-		return nil, wve.ErrW(wve.NoProofFound, "failed validate perspective", err)
-	}
-	if iresp.Error != nil {
-		return nil, wve.Err(wve.NoProofFound, "failed validate perspective: "+iresp.Error.Message)
-	}
-
 	signresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
 		Perspective: perspective,
 		Content:     digest,
@@ -701,59 +708,102 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 		return nil, wve.Err(wve.InvalidSignature, signresp.Error.Message)
 	}
 
-	if p.CustomProofDER == nil {
-		//Build a proof
-		proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
-			Perspective: perspective,
-			Namespace:   p.Namespace,
-			Statements: []*eapipb.RTreePolicyStatement{
-				{
-					PermissionSet: []byte(WAVEMQPermissionSet),
-					Permissions:   []string{WAVEMQSubscribe},
-					Resource:      p.Uri,
-				},
-			},
-			ResyncFirst: true,
-		})
-		if err != nil {
-			return nil, wve.ErrW(wve.NoProofFound, "failed to build", err)
-		}
-		if proofresp.Error != nil {
-			return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
+	bk := bcacheKey{}
+	copy(bk.Namespace[:], p.Namespace)
+	copy(bk.Target[:], realhash)
+
+	policyhash := sha3.New256()
+	policyhash.Write([]byte(WAVEMQSubscribe))
+	policyhash.Write([]byte("onuri="))
+	policyhash.Write([]byte(p.Uri))
+	poldigest := policyhash.Sum(nil)
+	copy(bk.PolicyHash[:], poldigest)
+
+	am.bcachemu.RLock()
+	cachedproof, ok := am.bcache[bk]
+	am.bcachemu.RUnlock()
+
+	var proofder []byte
+	var expiry time.Time
+
+	if p.CustomProofDER != nil {
+		proofder = p.CustomProofDER
+	} else {
+		rebuildproof := true
+		if ok {
+			if cachedproof.CacheExpiry.After(time.Now()) {
+				rebuildproof = false
+			}
 		}
 
-		expiry := time.Unix(0, proofresp.Result.Expiry*1e6)
-		if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
-			expiry = time.Unix(0, p.AbsoluteExpiry)
+		if rebuildproof {
+			//Build a proof
+			proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
+				Perspective: perspective,
+				Namespace:   p.Namespace,
+				Statements: []*eapipb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(WAVEMQPermissionSet),
+						Permissions:   []string{WAVEMQSubscribe},
+						Resource:      p.Uri,
+					},
+				},
+				ResyncFirst: true,
+			})
+			if err != nil {
+				return nil, wve.ErrW(wve.NoProofFound, "failed to build", err)
+			}
+			if proofresp.Error != nil {
+				ci := &bcacheItem{
+					CacheExpiry: time.Now().Add(FailedProofCacheTime),
+					Valid:       false,
+				}
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
+			}
+
+			proofder = proofresp.ProofDER
+			ci := &bcacheItem{
+				CacheExpiry: time.Now().Add(SuccessfulProofCacheTime),
+				Valid:       true,
+				DER:         proofresp.ProofDER,
+				ProofExpiry: time.Unix(0, proofresp.Result.Expiry*1e6),
+			}
+			if ci.ProofExpiry.Before(ci.CacheExpiry) {
+				ci.CacheExpiry = ci.ProofExpiry
+			}
+			am.bcachemu.Lock()
+			am.bcache[bk] = ci
+			am.bcachemu.Unlock()
+
+			expiry = time.Unix(0, proofresp.Result.Expiry*1e6)
+			if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
+				expiry = time.Unix(0, p.AbsoluteExpiry)
+			}
+		} else {
+			proofder = cachedproof.DER
+			expiry = cachedproof.ProofExpiry
+			if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
+				expiry = time.Unix(0, p.AbsoluteExpiry)
+			}
 		}
-		return &pb.PeerSubscribeParams{
-			Tbs: &pb.PeerSubscriptionTBS{
-				Expiry:       p.Expiry,
-				SourceEntity: iresp.Entity.Hash,
-				Namespace:    p.Namespace,
-				Uri:          p.Uri,
-				Id:           p.Identifier,
-				RouterID:     routerID,
-			},
-			Signature:      signresp.Signature,
-			ProofDER:       proofresp.ProofDER,
-			AbsoluteExpiry: expiry.UnixNano(),
-		}, nil
-	} else {
-		return &pb.PeerSubscribeParams{
-			Tbs: &pb.PeerSubscriptionTBS{
-				Expiry:       p.Expiry,
-				SourceEntity: iresp.Entity.Hash,
-				Namespace:    p.Namespace,
-				Uri:          p.Uri,
-				Id:           p.Identifier,
-				RouterID:     routerID,
-			},
-			Signature:      signresp.Signature,
-			ProofDER:       p.CustomProofDER,
-			AbsoluteExpiry: p.AbsoluteExpiry,
-		}, nil
 	}
+
+	return &pb.PeerSubscribeParams{
+		Tbs: &pb.PeerSubscriptionTBS{
+			Expiry:       p.Expiry,
+			SourceEntity: realhash,
+			Namespace:    p.Namespace,
+			Uri:          p.Uri,
+			Id:           p.Identifier,
+			RouterID:     routerID,
+		},
+		Signature:      signresp.Signature,
+		ProofDER:       proofder,
+		AbsoluteExpiry: expiry.UnixNano(),
+	}, nil
 
 }
 

@@ -62,7 +62,6 @@ func main() {
 	fmt.Printf("configuration loaded\n")
 
 	consts.DefaultToUnrevoked = conf.WaveConfig.DefaultToUnrevoked
-
 	qm, err := core.NewQManager(&conf.QueueConfig)
 	if err != nil {
 		fmt.Printf("failed to initialize queues: %v\n", err)
@@ -78,10 +77,8 @@ func main() {
 		fmt.Printf("failed to initialize routing: %v\n", err)
 		os.Exit(1)
 	}
-
 	server.NewLocalServer(tm, am, &conf.LocalConfig)
 	server.NewPeerServer(tm, am, &conf.PeerConfig)
-
 	sigchan := make(chan os.Signal, 30)
 	signal.Notify(sigchan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-sigchan

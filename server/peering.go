@@ -48,7 +48,7 @@ type PeerServerConfig struct {
 
 func NewPeerServer(tm *core.Terminus, am *core.AuthModule, cfg *PeerServerConfig) ShutdownAble {
 	//TODO add the code for verifying key exchange
-	fmt.Printf("Listening on %s\n", cfg.ListenAddr)
+	fmt.Printf("Listening for peering connections on %s\n", cfg.ListenAddr)
 	l, err := net.Listen("tcp", cfg.ListenAddr)
 	if err != nil {
 		panic(err)

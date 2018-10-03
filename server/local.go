@@ -85,7 +85,7 @@ type ShutdownAble interface {
 }
 
 func NewLocalServer(tm *core.Terminus, am *core.AuthModule, cfg *LocalServerConfig) ShutdownAble {
-	fmt.Printf("Listening on %s\n", cfg.ListenAddr)
+	fmt.Printf("Listening for local connections on %s\n", cfg.ListenAddr)
 	l, err := net.Listen("tcp", cfg.ListenAddr)
 	if err != nil {
 		panic(err)

@@ -159,7 +159,6 @@ type QueryElement struct {
 }
 
 func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, error) {
-
 	//First validate the config
 	err := am.SetRouterEntityFile(cfg.RouterEntityFile)
 	if err != nil {
@@ -183,7 +182,6 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 		uplinkConns:   make(map[string]*PeerConnection),
 		drnamespaces:  weRoute,
 	}
-
 	rv.namespaces = make(map[string]*DesignatedRouter)
 	for _, r := range cfg.Router {
 		dr := r

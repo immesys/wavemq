@@ -122,8 +122,10 @@
     "crypto/keyspb",
     "crypto/sigpb",
     "merkle",
+    "merkle/coniks",
     "merkle/hashers",
     "merkle/maphasher",
+    "merkle/rfc6962",
     "storage",
     "storage/storagepb",
     "trees",
@@ -145,8 +147,8 @@
     "runtime/internal",
     "utilities"
   ]
-  revision = "8558711daa6c2853489043207b563dceacbc19cf"
-  version = "v1.5.0"
+  revision = "aeab1d96e0f1368d243e2e5f526aa29d495517bb"
+  version = "v1.5.1"
 
 [[projects]]
   branch = "master"
@@ -181,10 +183,11 @@
     "serdes",
     "storage/overlay",
     "storage/simplehttp",
+    "storage/vldmstorage3/vldmpb",
     "waved",
     "wve"
   ]
-  revision = "65e5400589246c498e47d47ce132bed6cc2fd599"
+  revision = "a07892dbbf6e9550af8bf7671b18ecd4a0175b13"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -370,7 +373,7 @@
     "salsa20/salsa",
     "sha3"
   ]
-  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
+  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [[projects]]
   branch = "master"
@@ -384,7 +387,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "f04abc6bdfa7a0171a8a0c9fd2ada9391044d056"
+  revision = "f5e5bdd778241bfefa8627f7124c39cd6ad8d74f"
 
 [[projects]]
   branch = "master"
@@ -393,7 +396,7 @@
     "cpu",
     "unix"
   ]
-  revision = "b09afc3d579e346c4a7e4705953acaf6f9e551bd"
+  revision = "af653ce8b74f808d092db8ca9741fbb63d2a469d"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -424,7 +427,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "0e822944c569bf5c9afd034adaa56208bd2906ac"
+  revision = "c7e5094acea1ca1b899e2259d80a6b0f882f81f8"
 
 [[projects]]
   name = "google.golang.org/grpc"
