@@ -101,6 +101,14 @@ func NewLocalServer(tm *core.Terminus, am *core.AuthModule, cfg *LocalServerConf
 	return s
 }
 
+func (s *srv) ConnectionStatus(ctx context.Context, p *pb.ConnectionStatusParams) (*pb.ConnectionStatusResponse, error) {
+	a, b := s.tm.ConnectionStatus()
+	return &pb.ConnectionStatusResponse{
+		TotalPeers:     int32(b),
+		ConnectedPeers: int32(a),
+	}, nil
+}
+
 func (s *srv) Publish(ctx context.Context, p *pb.PublishParams) (*pb.PublishResponse, error) {
 	m, err := s.am.FormMessage(p, s.tm.RouterID())
 	if err != nil {

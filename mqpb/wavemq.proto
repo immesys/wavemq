@@ -8,12 +8,23 @@ service WAVEMQ {
   rpc Publish(PublishParams) returns (PublishResponse);
   rpc Subscribe(SubscribeParams) returns (stream SubscriptionMessage);
   rpc Query(QueryParams) returns (stream QueryMessage);
+  rpc ConnectionStatus(ConnectionStatusParams) returns (ConnectionStatusResponse);
 }
+
 service WAVEMQPeering {
   rpc PeerPublish(PeerPublishParams) returns (PeerPublishResponse);
   rpc PeerSubscribe(PeerSubscribeParams) returns (stream SubscriptionMessage);
   rpc PeerUnsubscribe(PeerUnsubscribeParams) returns (PeerUnsubscribeResponse);
   rpc PeerQueryRequest(PeerQueryParams) returns (stream QueryMessage);
+}
+
+message ConnectionStatusParams {
+
+}
+
+message ConnectionStatusResponse {
+  int32 totalPeers = 1;
+  int32 connectedPeers = 2;
 }
 
 message QueryParams {
