@@ -249,12 +249,14 @@ func NewQManager(cfg *QManagerConfig) (*QManager, error) {
 
 func (qm *QManager) trimDB() {
 	for {
-		time.Sleep(5 * time.Minute)
 	again:
 		err := qm.db.RunValueLogGC(0.5)
 		if err == nil {
+			fmt.Printf("GC successful\n")
 			goto again
 		}
+		fmt.Printf("GC returns: %v\n", err)
+		time.Sleep(5 * time.Minute)
 	}
 }
 func (qm *QManager) Shutdown() {
@@ -928,6 +930,7 @@ func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
 	q.size += int64(sz)
 	pmQueuedBytes.Add(float64(sz))
 	pmQueuedMessages.Add(1)
+	pmCommittedMessages.Add(1)
 	q.length++
 	return nil
 }

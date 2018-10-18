@@ -187,7 +187,7 @@
     "waved",
     "wve"
   ]
-  revision = "1202753333dac13b6b0865d1a55f2df4cc442b38"
+  revision = "71f85726c34d8a090977c95a4dfebbb85dd9e553"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"

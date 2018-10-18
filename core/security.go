@@ -287,6 +287,7 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 
 	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
 		ProofDER: m.ProofDER,
+		Subject:  m.Tbs.SourceEntity,
 		RequiredRTreePolicy: &eapipb.RTreePolicy{
 			Namespace: m.Tbs.Namespace,
 			Statements: []*eapipb.RTreePolicyStatement{
@@ -374,6 +375,7 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
 		ProofDER: s.ProofDER,
+		Subject:  s.Tbs.SourceEntity,
 		RequiredRTreePolicy: &eapipb.RTreePolicy{
 			Namespace: s.Tbs.Namespace,
 			Statements: []*eapipb.RTreePolicyStatement{
@@ -461,6 +463,7 @@ func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
 		ProofDER: s.ProofDER,
+		Subject:  s.SourceEntity,
 		RequiredRTreePolicy: &eapipb.RTreePolicy{
 			Namespace: s.Namespace,
 			Statements: []*eapipb.RTreePolicyStatement{
@@ -569,11 +572,11 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 			}
 		}
 
-		if rebuildproof {
-			//	fmt.Printf("[PC] form message proof cache MISS\n")
-		} else {
-			//	fmt.Printf("[PC] form message proof cache HIT\n")
-		}
+		// if rebuildproof {
+		// 	fmt.Printf("[PC] form message proof cache MISS: %v\n", p.Uri)
+		// } else {
+		// 	fmt.Printf("[PC] form message proof cache HIT\n")
+		// }
 
 		if rebuildproof {
 			proofresp, err := am.wave.BuildRTreeProof(context.Background(), &eapipb.BuildRTreeProofParams{
@@ -865,11 +868,11 @@ func (am *AuthModule) FormQueryRequest(p *pb.QueryParams, routerID string) (*pb.
 			}
 		}
 
-		if rebuildproof {
-			fmt.Printf("[PC] query proof cache MISS\n")
-		} else {
-			fmt.Printf("[PC] query proof cache HIT\n")
-		}
+		// if rebuildproof {
+		// 	fmt.Printf("[PC] query proof cache MISS\n")
+		// } else {
+		// 	fmt.Printf("[PC] query proof cache HIT\n")
+		// }
 
 		if rebuildproof {
 
@@ -976,6 +979,7 @@ func (am *AuthModule) VerifyServerHandshake(nsString string, entityHash []byte, 
 	//Signature ok, verify proof
 	presp, err := am.wave.VerifyProof(context.Background(), &eapipb.VerifyProofParams{
 		ProofDER: proof,
+		Subject:  entityHash,
 		RequiredRTreePolicy: &eapipb.RTreePolicy{
 			Namespace: ns,
 			Statements: []*eapipb.RTreePolicyStatement{
