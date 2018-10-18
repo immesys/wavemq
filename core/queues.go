@@ -242,10 +242,21 @@ func NewQManager(cfg *QManagerConfig) (*QManager, error) {
 		return nil, err
 	}
 	go rv.bgTasks()
+	go rv.trimDB()
 
 	return rv, nil
 }
 
+func (qm *QManager) trimDB() {
+	for {
+		time.Sleep(5 * time.Minute)
+	again:
+		err := qm.db.RunValueLogGC(0.5)
+		if err == nil {
+			goto again
+		}
+	}
+}
 func (qm *QManager) Shutdown() {
 	qm.qzmu.Lock()
 	for _, q := range qm.qz {

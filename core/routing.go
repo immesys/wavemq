@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/immesys/wave/wve"
 	pb "github.com/immesys/wavemq/mqpb"
 	"github.com/prometheus/client_golang/prometheus"
@@ -286,9 +286,20 @@ func NewTerminus(qm *QManager, am *AuthModule, cfg *RoutingConfig) (*Terminus, e
 
 	//Run the BG tasks
 	go rv.bgTasks()
+	go rv.trimDB()
 	return rv, nil
 }
 
+func (t *Terminus) trimDB() {
+	for {
+		time.Sleep(30 * time.Minute)
+	again:
+		err := t.db.RunValueLogGC(0.5)
+		if err == nil {
+			goto again
+		}
+	}
+}
 func (t *Terminus) RouterID() string {
 	return t.ourNodeId
 }
