@@ -20,6 +20,7 @@ import (
 	"github.com/cloudflare/cfssl/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/encoding/gzip"
 )
 
 // type TransportCredentials interface {
@@ -185,7 +186,7 @@ func (t *Terminus) dialPeer(address string, namespace string) (*grpc.ClientConn,
 		t:         t,
 		namespace: namespace,
 	}
-	return grpc.Dial(address, grpc.WithTransportCredentials(tc), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
+	return grpc.Dial(address, grpc.WithTransportCredentials(tc), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second), grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
 }
 
 func (t *Terminus) ServerTransportCredentials() credentials.TransportCredentials {
