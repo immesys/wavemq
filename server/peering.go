@@ -11,6 +11,8 @@ import (
 	pb "github.com/immesys/wavemq/mqpb"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/encoding"
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 //Some instrumentation
@@ -34,6 +36,8 @@ func init() {
 	prometheus.MustRegister(pmFailedQuery)
 	prometheus.MustRegister(pmFailedSubscribe)
 	prometheus.MustRegister(pmFailedPublish)
+
+	encoding.RegisterCompressor(encoding.GetCompressor("gzip"))
 }
 
 type peerServer struct {
