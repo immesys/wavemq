@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	pb "github.com/immesys/wavemq/mqpb"
 	"github.com/stretchr/testify/require"
 )

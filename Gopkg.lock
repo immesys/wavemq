@@ -63,12 +63,6 @@
   version = "v1.8.17"
 
 [[projects]]
-  name = "github.com/gogo/protobuf"
-  packages = ["proto"]
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/golang/glog"
   packages = ["."]
@@ -187,7 +181,7 @@
     "waved",
     "wve"
   ]
-  revision = "71f85726c34d8a090977c95a4dfebbb85dd9e553"
+  revision = "6cfca3ee1198d9268e9a238f39cb110e7eb393f9"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -230,12 +224,6 @@
   packages = ["."]
   revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
   version = "v1.2"
-
-[[projects]]
-  name = "github.com/philhofer/fwd"
-  packages = ["."]
-  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
-  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -287,6 +275,18 @@
   revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/samkumar/embedded-pairing"
+  packages = [
+    "lang/go/bls12381",
+    "lang/go/cryptutils",
+    "lang/go/internal",
+    "lang/go/lqibe",
+    "lang/go/wkdibe"
+  ]
+  revision = "e1d952e4dad3037ab9b941011525c968b659cfd6"
+
+[[projects]]
   name = "github.com/spaolacci/murmur3"
   packages = ["."]
   revision = "9f5d223c60793748f04a9d5b4b4eacddfc1f755d"
@@ -321,27 +321,6 @@
   revision = "6b91fda63f2e36186f1c9d0e48578defb69c5d43"
 
 [[projects]]
-  name = "github.com/tinylib/msgp"
-  packages = ["msgp"]
-  revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
-  version = "1.0.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/ucbrise/starwave"
-  packages = [
-    "crypto/cryptutils",
-    "crypto/oaque"
-  ]
-  revision = "4529c4ba0df141c18c5be7f904ea09efc9222496"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/ucbrise/vuvuzelacrypto"
-  packages = ["ibe"]
-  revision = "fccab9b96bef05a49d84e0dcfc56e0a79f596df3"
-
-[[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
@@ -367,11 +346,7 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
-    "internal/subtle",
-    "nacl/secretbox",
     "pbkdf2",
-    "poly1305",
-    "salsa20/salsa",
     "sha3"
   ]
   revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
@@ -463,15 +438,9 @@
   revision = "8dea3dc473e90c8179e519d91302d0597c0ca1d1"
   version = "v1.15.0"
 
-[[projects]]
-  branch = "master"
-  name = "vuvuzela.io/crypto"
-  packages = ["bn256"]
-  revision = "61495c08530216116939f6dc3af094f4e4037b5f"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a7c735fc24e3a6d26dd0e94cdd9790bd352c7cf0e740a51722371e62ae81d638"
+  inputs-digest = "bc09fb04c2c5cdc5336eb8c4ee5a13f925a36b686f74e64e1006e4309abca924"
   solver-name = "gps-cdcl"
   solver-version = 1
