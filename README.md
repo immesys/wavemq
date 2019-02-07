@@ -98,6 +98,8 @@ Then grant permissions from your namespace to your service entity:
 
 ```bash
 wv rtgrant --attester namespace.ent --subject service.ent --expiry 1y "wavemq:subscribe,publish,query@namespace.ent/*"
+
+wv rtgrant --attester namespace.ent --subject service.ent --expiry 1y "wave:decrypt@namespace.ent/*"
 ```
 
 Then you follow [the example](https://github.com/immesys/wavemq/tree/master/example) and fill in the namespace hash and entity file you are using. If you run the example, it should print out hello world five times then exit.
@@ -106,19 +108,19 @@ Then you follow [the example](https://github.com/immesys/wavemq/tree/master/exam
 
 We assume you already have WAVE set up and running. To create a designated router, you first need to create a namespace:
 ```bash
-wv mke -o namespace.ent --expiry 40y
+wv mke -o namespace.ent --expiry 1y
 ```
 
 Then you need to create an entity for your designated router:
 
 ```bash
-wv mke -o router.ent --expiry 40y
+wv mke -o router.ent --expiry 1y
 ```
 
 Then you need to grant your router the permission to route on the namespace:
 
 ```bash
-wv rtgrant --attester namespace.ent --subject router.ent --expiry 3y "wavemq:route@namespace.ent/*" 
+wv rtgrant --attester namespace.ent --subject router.ent --expiry 1y "wavemq:route@namespace.ent/*" 
 ```
 
 Finally, you need to create the proof that the router will hand to peers:

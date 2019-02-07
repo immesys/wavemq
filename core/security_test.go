@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/immesys/wave/consts"
 	"github.com/immesys/wave/eapi/pb"
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wavemq/mqpb"
@@ -228,10 +229,12 @@ func TestMessage(t *testing.T) {
 			DER: ent.SecretDER,
 		},
 	}
+	content := []byte("hello world")
 	msg, err := am.FormMessage(&mqpb.PublishParams{
 		Perspective: persp,
 		Namespace:   ns.Hash,
 		Uri:         "foo/bar",
+		Content:     []*mqpb.PayloadObject{{Schema: "text", Content: content}},
 	}, "lol")
 	require.NoError(t, err)
 
@@ -240,6 +243,109 @@ func TestMessage(t *testing.T) {
 	require.NoError(t, try1)
 	try2 := am.CheckMessage(msg)
 	require.NoError(t, try2)
+
+	//prepare
+	m, err := am.PrepareMessage(persp, msg)
+	require.NoError(t, err)
+	payload := []byte{}
+	for _, po := range m.Tbs.Payload {
+		payload = append(payload, po.Content...)
+	}
+	require.Equal(t, payload, content)
+}
+
+func TestEncryptedMessage(t *testing.T) {
+	ns, err := am.wave.CreateEntity(context.Background(), &pb.CreateEntityParams{})
+	require.NoError(t, err)
+	am.wave.PublishEntity(context.Background(), &pb.PublishEntityParams{
+		DER: ns.PublicDER,
+	})
+	ent, err := am.wave.CreateEntity(context.Background(), &pb.CreateEntityParams{})
+	require.NoError(t, err)
+	am.wave.PublishEntity(context.Background(), &pb.PublishEntityParams{
+		DER: ent.PublicDER,
+	})
+	attresp, err := am.wave.CreateAttestation(context.Background(), &pb.CreateAttestationParams{
+		Perspective: &pb.Perspective{
+			EntitySecret: &pb.EntitySecret{
+				DER: ns.SecretDER,
+			},
+		},
+		Publish:     true,
+		SubjectHash: ent.Hash,
+		Policy: &pb.Policy{
+			RTreePolicy: &pb.RTreePolicy{
+				Namespace: ns.Hash,
+				Statements: []*pb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(WAVEMQPermissionSet),
+						Permissions:   []string{WAVEMQPublish},
+						Resource:      "foo/bar",
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, attresp.Error)
+
+	persp := &mqpb.Perspective{
+		EntitySecret: &mqpb.EntitySecret{
+			DER: ent.SecretDER,
+		},
+	}
+
+	content := []byte("hello world")
+	msg, err := am.FormMessage(&mqpb.PublishParams{
+		Perspective:         persp,
+		Namespace:           ns.Hash,
+		Uri:                 "foo/bar",
+		Content:             []*mqpb.PayloadObject{{Schema: "text", Content: content}},
+		EncryptionPartition: [][]byte{[]byte("foo"), []byte("bar")},
+	}, "lol")
+	require.NoError(t, err)
+
+	// validate
+	try1 := am.CheckMessage(msg)
+	require.NoError(t, try1)
+	try2 := am.CheckMessage(msg)
+	require.NoError(t, try2)
+
+	// prepare
+	m, err := am.PrepareMessage(persp, msg)
+	require.Error(t, err)
+
+	attresp, err = am.wave.CreateAttestation(context.Background(), &pb.CreateAttestationParams{
+		Perspective: &pb.Perspective{
+			EntitySecret: &pb.EntitySecret{
+				DER: ns.SecretDER,
+			},
+		},
+		Publish:     true,
+		SubjectHash: ent.Hash,
+		Policy: &pb.Policy{
+			RTreePolicy: &pb.RTreePolicy{
+				Namespace: ns.Hash,
+				Statements: []*pb.RTreePolicyStatement{
+					{
+						PermissionSet: []byte(consts.WaveBuiltinPSET),
+						Permissions:   []string{consts.WaveBuiltinE2EE},
+						Resource:      "foo/bar",
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, attresp.Error)
+
+	m, err = am.PrepareMessage(persp, msg)
+	require.NoError(t, err)
+	payload := []byte{}
+	for _, po := range m.Tbs.Payload {
+		payload = append(payload, po.Content...)
+	}
+	require.Equal(t, payload, content)
 }
 
 func BenchmarkCheckMessage(t *testing.B) {
