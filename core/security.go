@@ -240,6 +240,7 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	}
 	//Check the signature
 	hash := sha3.New256()
+	hash.Write(m.Tbs.SourceEntity)
 	hash.Write(m.Tbs.Namespace)
 	hash.Write([]byte(m.Tbs.Uri))
 	for _, po := range m.Tbs.Payload {
@@ -332,6 +333,7 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 
 	//Check the signature
 	hash := sha3.New256()
+	hash.Write(s.Tbs.SourceEntity)
 	hash.Write(s.Tbs.Namespace)
 	hash.Write([]byte(s.Tbs.Uri))
 	hash.Write([]byte(s.Tbs.Id))
@@ -684,6 +686,7 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 		encryptedPayload = []*pb.PayloadObject{{Schema: "text", Content: encresp.Ciphertext}}
 	}
 	hash := sha3.New256()
+	hash.Write(realhash)
 	hash.Write(p.Namespace)
 	hash.Write([]byte(p.Uri))
 	for _, po := range encryptedPayload {
@@ -748,6 +751,7 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 	}
 
 	hash := sha3.New256()
+	hash.Write(realhash)
 	hash.Write(p.Namespace)
 	hash.Write([]byte(p.Uri))
 	hash.Write([]byte(p.Identifier))
