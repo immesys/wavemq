@@ -999,7 +999,7 @@ func (am *AuthModule) VerifyServerHandshake(nsString string, entityHash []byte, 
 		return err
 	}
 	if presp.Error != nil {
-		return errors.New(resp.Error.Message)
+		return errors.New(presp.Error.Message)
 	}
 	if !bytes.Equal(presp.Result.Subject, entityHash) {
 		return errors.New("proof valid but for a different entity")
