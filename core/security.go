@@ -786,6 +786,9 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 				expiry = time.Unix(0, p.AbsoluteExpiry)
 			}
 		} else {
+			if !cachedproof.Valid {
+				return nil, wve.Err(wve.NoProofFound, "we've cached that there is no proof for this")
+			}
 			proofder = cachedproof.DER
 			expiry = cachedproof.ProofExpiry
 			if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
