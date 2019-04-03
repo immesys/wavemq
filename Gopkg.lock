@@ -211,7 +211,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:95dac7ac73df9a197ba1bf73c9cf6b4b25d447ced0670db101ab09d721cd8d47"
+  digest = "1:3543b52a5a445a927690a313b6aff92a3571e09f5a127e03273001a71d13ca75"
   name = "github.com/immesys/wave"
   packages = [
     "consts",
@@ -230,7 +230,7 @@
     "wve",
   ]
   pruneopts = ""
-  revision = "342c1bfe5f0bf348ddc7ae0b5411f367b946f68a"
+  revision = "7f45a261d977a80eed7f3cd0f3263c706ed2c7df"
 
 [[projects]]
   digest = "1:63722a4b1e1717be7b98fc686e0b30d5e7f734b9e93d7dee86293b6deab7ea28"
