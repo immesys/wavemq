@@ -234,7 +234,7 @@ func (am *AuthModule) SetRouterEntityFile(filename string) error {
 //This checks that a publish message is authorized for the given URI
 func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
+	defer cancel()
 	if m.Tbs == nil {
 		return wve.Err(wve.InvalidParameter, "message missing TBS")
 	}
@@ -269,11 +269,12 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	ick.URI = m.Tbs.Uri
 	ick.Permission = WAVEMQPublish
 
-	ick.ProofLow, ick.ProofHigh = cityhash.Hash128(m.ProofDER)
-
-	// h := sha3.NewShake256()
-	// h.Write(m.ProofDER)
-	// h.Read(ick.ProofHash[:])
+	if len(m.ProofDER) == 0 && len(m.ProofHash) == 16 {
+		ick.ProofHigh = binary.BigEndian.Uint64(m.ProofHash[0:8])
+		ick.ProofLow = binary.BigEndian.Uint64(m.ProofHash[8:16])
+	} else {
+		ick.ProofLow, ick.ProofHigh = cityhash.Hash128(m.ProofDER)
+	}
 
 	am.icachemu.Lock()
 	entry, ok := am.icache[ick]
@@ -284,7 +285,11 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 			return nil
 		}
 		//fmt.Printf("returning message invalid from cache\n")
-		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid\n")
+		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid")
+	} else {
+		if m.ProofDER == nil && len(m.ProofHash) == 16 {
+			return wve.Err(wve.ProofNotCached, "send the full proof please")
+		}
 	}
 
 	presp, err := am.wave.VerifyProof(ctx, &eapipb.VerifyProofParams{
@@ -301,7 +306,6 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 			},
 		},
 	})
-	cancel()
 	if err != nil {
 		return wve.ErrW(wve.InternalError, "could not validate proof", err)
 	}

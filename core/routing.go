@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"bitbucket.org/creachadair/cityhash"
 	"github.com/dgraph-io/badger"
 	"github.com/golang/protobuf/proto"
 	"github.com/immesys/wave/wve"
@@ -643,6 +645,17 @@ func (t *Terminus) ConnectionStatus() (int64, int64) {
 	return t.activeUplink, int64(len(t.drnamespaces))
 }
 
+type peerProofCacheKey struct {
+	Low  uint64
+	High uint64
+}
+
+func (ck *peerProofCacheKey) Serialize() []byte {
+	rv := [16]byte{}
+	binary.BigEndian.PutUint64(rv[0:8], ck.High)
+	binary.BigEndian.PutUint64(rv[8:16], ck.Low)
+	return rv[:]
+}
 func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRouter) (err error) {
 	t.uplinkConnMu.Lock()
 	delete(t.uplinkConns, dr.Namespace)
@@ -653,11 +666,7 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 	if err != nil {
 		return err
 	}
-	//
-	// conn, err := grpc.Dial(dr.Address, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock(), grpc.WithTimeout(30*time.Second))
-	// if err != nil {
-	// 	return err
-	// }
+
 	//Ensure that we always close the connection upon some kind of failure
 	defer func() {
 		e := recover()
@@ -705,18 +714,46 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 
 					subctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 					pmUpstreamMessages.Add(1)
+
+					//Elide the proof
+					cacheKey := peerProofCacheKey{}
+					cacheKey.Low, cacheKey.High = cityhash.Hash128(m.ProofDER)
+
+					proofDER := m.ProofDER
+					m.ProofDER = nil
+					m.ProofHash = cacheKey.Serialize()
 					resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
 						Msg: m,
 					})
-					cancel()
+
 					if err != nil {
+						cancel()
 						//Abort this connection and reconnect
 						errch <- err
 						return
 					}
 					if resp.Error != nil {
-						fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
+						if resp.Error.Code == wve.ProofNotCached {
+							//This is okay, we just need to send the full message
+							m.ProofDER = proofDER
+							m.ProofHash = nil
+							resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
+								Msg: m,
+							})
+							if err != nil {
+								//Abort this connection and reconnect
+								cancel()
+								errch <- err
+								return
+							}
+							if resp.Error != nil {
+								fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
+							}
+						} else {
+							fmt.Printf("WARNING: PEER PUBLISH MESSAGE ERROR: %s\n", resp.Error.Message)
+						}
 					}
+					cancel()
 					//TODO use resp.sizes as mentioned above
 				}
 				//Wait until the queue is non empty
