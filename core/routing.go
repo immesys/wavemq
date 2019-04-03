@@ -592,6 +592,9 @@ func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
 			conn.Cancel()
 		}
 	}()
+
+	proofCache := make(map[peerProofCacheKey][]byte)
+
 	peer := pb.NewWAVEMQPeeringClient(conn.Conn)
 	sub, err := peer.PeerSubscribe(ctx, subreq)
 	if err != nil {
@@ -611,6 +614,18 @@ func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
 		msg, err := sub.Recv()
 		if err != nil {
 			panic(err)
+		}
+		if msg.Message.ProofDER == nil && len(msg.Message.ProofHash) == 16 {
+			cacheKey := peerProofCacheKey{}
+			cacheKey.High = binary.BigEndian.Uint64(msg.Message.ProofHash[:8])
+			cacheKey.Low = binary.BigEndian.Uint64(msg.Message.ProofHash[8:])
+			proof := proofCache[cacheKey]
+			msg.Message.ProofDER = proof
+			msg.Message.ProofHash = nil
+		} else {
+			cacheKey := peerProofCacheKey{}
+			cacheKey.Low, cacheKey.High = cityhash.Hash128(msg.Message.ProofDER)
+			proofCache[cacheKey] = msg.Message.ProofDER
 		}
 		msg.Message.Timestamps = append(msg.Message.Timestamps, time.Now().UnixNano())
 		pmDownstreamMessages.Add(1)

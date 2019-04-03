@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
 
+	"bitbucket.org/creachadair/cityhash"
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
@@ -109,9 +111,24 @@ func (s *peerServer) PeerPublish(ctx context.Context, p *pb.PeerPublishParams) (
 			Error: ToError(err),
 		}, nil
 	}
+	//Proof itself is nil, only proof DER needs to be elided
+	//spew.Dump(p.Msg.Proof)
 	s.tm.Publish(p.Msg)
 	return &pb.PeerPublishResponse{}, nil
 }
+
+type peerProofCacheKey struct {
+	Low  uint64
+	High uint64
+}
+
+func (ck *peerProofCacheKey) Serialize() []byte {
+	rv := [16]byte{}
+	binary.BigEndian.PutUint64(rv[0:8], ck.High)
+	binary.BigEndian.PutUint64(rv[8:16], ck.Low)
+	return rv[:]
+}
+
 func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering_PeerSubscribeServer) error {
 	err := s.am.CheckSubscription(p)
 	if err != nil {
@@ -141,6 +158,10 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 		Notify: notify,
 	})
 	notify <- struct{}{} //Run through once
+
+	//Keep a list of proofs that have been sent before
+	sentProofs := make(map[peerProofCacheKey]bool)
+
 	//Dequeueing resets the un-drained queue timer. We need to call dequeue
 	//every now and then even if there is no data
 	ticker := time.NewTicker(10 * time.Second)
@@ -168,6 +189,16 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 			}
 			it = pb.ShallowCloneMessageForDrops(it)
 			it.Drops = append(it.Drops, q.Drops())
+
+			cacheKey := peerProofCacheKey{}
+			cacheKey.Low, cacheKey.High = cityhash.Hash128(it.ProofDER)
+
+			if sentProofs[cacheKey] {
+				it.ProofHash = cacheKey.Serialize()
+				it.ProofDER = nil
+			} else {
+				sentProofs[cacheKey] = true
+			}
 			// err := s.am.CheckMessage(it)
 			// if err != nil {
 			// 	fmt.Printf("dropping message due to invalid proof\n")
