@@ -300,7 +300,7 @@ func TestEncryptedMessage(t *testing.T) {
 		Perspective:         persp,
 		Namespace:           ns.Hash,
 		Uri:                 "foo/bar",
-		Content:             []*mqpb.PayloadObject{{Schema: "text", Content: content}},
+		Content:             []*mqpb.PayloadObject{{Schema: "text", Content: content}, {Schema: "nottext", Content: []byte("something else")}},
 		EncryptionPartition: [][]byte{[]byte("foo"), []byte("bar")},
 	}, "lol")
 	require.NoError(t, err)
@@ -341,11 +341,10 @@ func TestEncryptedMessage(t *testing.T) {
 
 	m, err = am.PrepareMessage(persp, msg)
 	require.NoError(t, err)
-	payload := []byte{}
-	for _, po := range m.Tbs.Payload {
-		payload = append(payload, po.Content...)
-	}
-	require.Equal(t, payload, content)
+	require.Equal(t, m.Tbs.Payload[0].Schema, "text")
+	require.Equal(t, m.Tbs.Payload[0].Content, content)
+	require.Equal(t, m.Tbs.Payload[1].Schema, "nottext")
+	require.Equal(t, m.Tbs.Payload[1].Content, []byte("something else"))
 }
 
 func BenchmarkCheckMessage(t *testing.B) {

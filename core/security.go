@@ -516,22 +516,36 @@ func (am *AuthModule) PrepareMessage(persp *pb.Perspective, m *pb.Message) (*pb.
 	}
 	decryptedPayload := m.Tbs.Payload
 	if m.EncryptionPartition != nil {
-		payload := []byte{}
+		decryptedPayload = []*pb.PayloadObject{}
 		for _, po := range m.Tbs.Payload {
-			payload = append(payload, po.Content...)
+			decresp, err := am.wave.DecryptMessage(context.Background(), &eapipb.DecryptMessageParams{
+				Perspective: perspective,
+				Ciphertext:  po.Content,
+			})
+			if err != nil {
+				return nil, wve.ErrW(wve.MessageDecryptionError, "failed to decrypt", err)
+			}
+			if decresp.Error != nil && decresp.Error.Code == 913 {
+				//This could be because we did not resync, try again with resync
+				decresp, err = am.wave.DecryptMessage(context.Background(), &eapipb.DecryptMessageParams{
+					Perspective: perspective,
+					Ciphertext:  po.Content,
+					ResyncFirst: true,
+				})
+				if err != nil {
+					return nil, wve.ErrW(wve.MessageDecryptionError, "failed to decrypt", err)
+				}
+				if decresp.Error != nil {
+					return nil, wve.Err(wve.MessageDecryptionError, decresp.Error.Message)
+				}
+			} else if decresp.Error != nil {
+				return nil, wve.Err(wve.MessageDecryptionError, decresp.Error.Message)
+			}
+			decryptedPayload = append(decryptedPayload, &pb.PayloadObject{
+				Schema:  po.Schema,
+				Content: decresp.Content,
+			})
 		}
-		decresp, err := am.wave.DecryptMessage(context.Background(), &eapipb.DecryptMessageParams{
-			Perspective: perspective,
-			Ciphertext:  payload,
-			ResyncFirst: true,
-		})
-		if err != nil {
-			return nil, wve.ErrW(wve.MessageDecryptionError, "failed to decrypt", err)
-		}
-		if decresp.Error != nil {
-			return nil, wve.Err(wve.MessageDecryptionError, decresp.Error.Message)
-		}
-		decryptedPayload = []*pb.PayloadObject{{Schema: "text", Content: decresp.Content}}
 	}
 	return &pb.Message{
 		Signature:           m.Signature,
@@ -663,27 +677,29 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 
 	encryptedPayload := p.Content
 	if p.EncryptionPartition != nil {
-		payload := []byte{}
-		for _, po := range p.Content {
-			payload = append(payload, po.Content...)
-		}
 		chunks := []string{}
 		for _, chunk := range p.EncryptionPartition {
 			chunks = append(chunks, string(chunk))
 		}
 		partition := strings.Join(chunks[:], "/")
-		encresp, err := am.wave.EncryptMessage(context.Background(), &eapipb.EncryptMessageParams{
-			Namespace: p.Namespace,
-			Resource:  partition,
-			Content:   payload,
-		})
-		if err != nil {
-			return nil, wve.ErrW(wve.MessageEncryptionError, "failed to encrypt", err)
+		encryptedPayload = []*pb.PayloadObject{}
+		for _, po := range p.Content {
+			encresp, err := am.wave.EncryptMessage(context.Background(), &eapipb.EncryptMessageParams{
+				Namespace: p.Namespace,
+				Resource:  partition,
+				Content:   po.Content,
+			})
+			if err != nil {
+				return nil, wve.ErrW(wve.MessageEncryptionError, "failed to encrypt", err)
+			}
+			if encresp.Error != nil {
+				return nil, wve.Err(wve.MessageEncryptionError, encresp.Error.Message)
+			}
+			encryptedPayload = append(encryptedPayload, &pb.PayloadObject{
+				Schema:  po.Schema,
+				Content: encresp.Ciphertext,
+			})
 		}
-		if encresp.Error != nil {
-			return nil, wve.Err(wve.MessageEncryptionError, encresp.Error.Message)
-		}
-		encryptedPayload = []*pb.PayloadObject{{Schema: "text", Content: encresp.Ciphertext}}
 	}
 	hash := sha3.New256()
 	hash.Write(realhash)
