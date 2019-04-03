@@ -254,14 +254,14 @@ func (s *srv) Subscribe(p *pb.SubscribeParams, r pb.WAVEMQ_SubscribeServer) erro
 				continue
 			}
 
-			it, err = s.am.PrepareMessage(p.Perspective, it)
+			msg, err := s.am.PrepareMessage(p.Perspective, it)
 			if err != nil {
 				pmFailedDecryption.Add(1)
 				lg.Info("dropping message in subscribe %q: could not prepare: %v", it.Tbs.Uri, err.Reason())
 				continue
 			}
 			uerr := r.Send(&pb.SubscriptionMessage{
-				Message: it,
+				Message: msg,
 			})
 			if uerr != nil {
 				return uerr

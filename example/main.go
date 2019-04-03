@@ -57,9 +57,10 @@ func main() {
 					DER: perspective,
 				},
 			},
-			Namespace: namespaceBytes,
-			Uri:       "example/topic",
-			Content:   []*mqpb.PayloadObject{{Schema: "text", Content: []byte("world")}},
+			Namespace:           namespaceBytes,
+			Uri:                 "example/topic",
+			Content:             []*mqpb.PayloadObject{{Schema: "text", Content: []byte("world")}},
+			EncryptionPartition: [][]byte{[]byte("example"), []byte("topic")},
 		})
 		if err != nil {
 			fmt.Printf("publish error: %v\n", err)
