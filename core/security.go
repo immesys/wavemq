@@ -74,6 +74,7 @@ type icacheItem struct {
 	CacheExpiry time.Time
 	ProofExpiry time.Time
 	Valid       bool
+	DER         []byte
 }
 
 type bcacheKey struct {
@@ -269,7 +270,9 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	ick.URI = m.Tbs.Uri
 	ick.Permission = WAVEMQPublish
 
-	if len(m.ProofDER) == 0 && len(m.ProofHash) == 16 {
+	elidedProof := len(m.ProofDER) == 0 && len(m.ProofHash) == 16
+
+	if elidedProof {
 		ick.ProofHigh = binary.BigEndian.Uint64(m.ProofHash[0:8])
 		ick.ProofLow = binary.BigEndian.Uint64(m.ProofHash[8:16])
 	} else {
@@ -282,12 +285,15 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	if ok && entry.CacheExpiry.After(time.Now()) {
 		if entry.Valid {
 			//fmt.Printf("returning message valid from cache\n")
+			if elidedProof {
+				m.ProofDER = entry.DER
+			}
 			return nil
 		}
 		//fmt.Printf("returning message invalid from cache\n")
 		return wve.Err(wve.ProofInvalid, "this proof has been cached as invalid")
 	} else {
-		if m.ProofDER == nil && len(m.ProofHash) == 16 {
+		if elidedProof {
 			return wve.Err(wve.ProofNotCached, "send the full proof please")
 		}
 	}
@@ -314,6 +320,7 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		am.icache[ick] = &icacheItem{
 			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
 			Valid:       false,
+			DER:         m.ProofDER,
 		}
 		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
@@ -327,6 +334,7 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 	am.icache[ick] = &icacheItem{
 		CacheExpiry: expiry,
 		Valid:       true,
+		DER:         m.ProofDER,
 	}
 	am.icachemu.Unlock()
 	return nil
@@ -415,6 +423,7 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 		CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
 		Valid:       true,
 		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
+		DER:         s.ProofDER,
 	}
 	am.icachemu.Lock()
 	am.icache[ick] = entry
@@ -501,6 +510,7 @@ func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
 		CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
 		Valid:       true,
 		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
+		DER:         s.ProofDER,
 	}
 	am.icachemu.Lock()
 	am.icache[ick] = entry
