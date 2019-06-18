@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"bitbucket.org/creachadair/cityhash"
+	"github.com/creachadair/cityhash"
 	"github.com/immesys/wave/wve"
 	"github.com/immesys/wavemq/core"
 	pb "github.com/immesys/wavemq/mqpb"
