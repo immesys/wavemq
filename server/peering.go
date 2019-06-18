@@ -34,6 +34,8 @@ var pmFailedPublish = prometheus.NewCounter(prometheus.CounterOpts{
 	Help:      "Number of publish requests that failed proof",
 })
 
+const docaching = true
+
 func init() {
 	prometheus.MustRegister(pmFailedQuery)
 	prometheus.MustRegister(pmFailedSubscribe)
@@ -193,11 +195,13 @@ func (s *peerServer) PeerSubscribe(p *pb.PeerSubscribeParams, r pb.WAVEMQPeering
 			cacheKey := peerProofCacheKey{}
 			cacheKey.Low, cacheKey.High = cityhash.Hash128(it.ProofDER)
 
-			if sentProofs[cacheKey] {
-				it.ProofHash = cacheKey.Serialize()
-				it.ProofDER = nil
-			} else {
-				sentProofs[cacheKey] = true
+			if docaching {
+				if sentProofs[cacheKey] {
+					it.ProofHash = cacheKey.Serialize()
+					it.ProofDER = nil
+				} else {
+					sentProofs[cacheKey] = true
+				}
 			}
 			// err := s.am.CheckMessage(it)
 			// if err != nil {

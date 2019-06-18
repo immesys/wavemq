@@ -38,6 +38,8 @@ const ValidatedProofMaxCacheTime = 6 * time.Hour
 const SuccessfulProofCacheTime = 6 * time.Hour
 const FailedProofCacheTime = 5 * time.Minute
 
+const docaching = true
+
 type AuthModule struct {
 	cfg  *waved.Configuration
 	wave *eapi.EAPI
@@ -316,13 +318,15 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		return wve.ErrW(wve.InternalError, "could not validate proof", err)
 	}
 	if presp.Error != nil {
-		am.icachemu.Lock()
-		am.icache[ick] = &icacheItem{
-			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
-			Valid:       false,
-			DER:         m.ProofDER,
+		if docaching {
+			am.icachemu.Lock()
+			am.icache[ick] = &icacheItem{
+				CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+				Valid:       false,
+				DER:         m.ProofDER,
+			}
+			am.icachemu.Unlock()
 		}
-		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
 
@@ -331,10 +335,12 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		expiry = time.Now().Add(ValidatedProofMaxCacheTime)
 	}
 	am.icachemu.Lock()
-	am.icache[ick] = &icacheItem{
-		CacheExpiry: expiry,
-		Valid:       true,
-		DER:         m.ProofDER,
+	if docaching {
+		am.icache[ick] = &icacheItem{
+			CacheExpiry: expiry,
+			Valid:       true,
+			DER:         m.ProofDER,
+		}
 	}
 	am.icachemu.Unlock()
 	return nil
@@ -407,13 +413,15 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 		return wve.ErrW(wve.InternalError, "could not validate proof", err)
 	}
 	if presp.Error != nil {
-		entry := &icacheItem{
-			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
-			Valid:       false,
+		if docaching {
+			entry := &icacheItem{
+				CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
+				Valid:       false,
+			}
+			am.icachemu.Lock()
+			am.icache[ick] = entry
+			am.icachemu.Unlock()
 		}
-		am.icachemu.Lock()
-		am.icache[ick] = entry
-		am.icachemu.Unlock()
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
 
@@ -425,9 +433,11 @@ func (am *AuthModule) CheckSubscription(s *pb.PeerSubscribeParams) wve.WVE {
 		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
 		DER:         s.ProofDER,
 	}
-	am.icachemu.Lock()
-	am.icache[ick] = entry
-	am.icachemu.Unlock()
+	if docaching {
+		am.icachemu.Lock()
+		am.icache[ick] = entry
+		am.icachemu.Unlock()
+	}
 	//If the user did not specify an absolute expiry, or specified one greater than
 	//the proof allows, then set the field to the proof's expiry
 	if s.AbsoluteExpiry == 0 || s.AbsoluteExpiry > presp.Result.Expiry {
@@ -500,9 +510,11 @@ func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
 			CacheExpiry: time.Now().Add(ValidatedProofMaxCacheTime),
 			Valid:       false,
 		}
-		am.icachemu.Lock()
-		am.icache[ick] = entry
-		am.icachemu.Unlock()
+		if docaching {
+			am.icachemu.Lock()
+			am.icache[ick] = entry
+			am.icachemu.Unlock()
+		}
 		return wve.Err(wve.ProofInvalid, presp.Error.Message)
 	}
 
@@ -512,10 +524,11 @@ func (am *AuthModule) CheckQuery(s *pb.PeerQueryParams) wve.WVE {
 		ProofExpiry: time.Unix(0, presp.Result.Expiry*1e6),
 		DER:         s.ProofDER,
 	}
-	am.icachemu.Lock()
-	am.icache[ick] = entry
-	am.icachemu.Unlock()
-
+	if docaching {
+		am.icachemu.Lock()
+		am.icache[ick] = entry
+		am.icachemu.Unlock()
+	}
 	return nil
 }
 
@@ -665,9 +678,11 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 					CacheExpiry: time.Now().Add(FailedProofCacheTime),
 					Valid:       false,
 				}
-				am.bcachemu.Lock()
-				am.bcache[bk] = ci
-				am.bcachemu.Unlock()
+				if docaching {
+					am.bcachemu.Lock()
+					am.bcache[bk] = ci
+					am.bcachemu.Unlock()
+				}
 				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
 			}
 
@@ -681,9 +696,11 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 			if ci.ProofExpiry.Before(ci.CacheExpiry) {
 				ci.CacheExpiry = ci.ProofExpiry
 			}
-			am.bcachemu.Lock()
-			am.bcache[bk] = ci
-			am.bcachemu.Unlock()
+			if docaching {
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+			}
 		} else {
 			proofder = cachedproof.DER
 		}
@@ -856,9 +873,11 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 					CacheExpiry: time.Now().Add(FailedProofCacheTime),
 					Valid:       false,
 				}
-				am.bcachemu.Lock()
-				am.bcache[bk] = ci
-				am.bcachemu.Unlock()
+				if docaching {
+					am.bcachemu.Lock()
+					am.bcache[bk] = ci
+					am.bcachemu.Unlock()
+				}
 				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
 			}
 
@@ -872,9 +891,11 @@ func (am *AuthModule) FormSubRequest(p *pb.SubscribeParams, routerID string) (*p
 			if ci.ProofExpiry.Before(ci.CacheExpiry) {
 				ci.CacheExpiry = ci.ProofExpiry
 			}
-			am.bcachemu.Lock()
-			am.bcache[bk] = ci
-			am.bcachemu.Unlock()
+			if docaching {
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+			}
 
 			expiry = time.Unix(0, proofresp.Result.Expiry*1e6)
 			if p.AbsoluteExpiry != 0 && expiry.After(time.Unix(0, p.AbsoluteExpiry)) {
@@ -995,10 +1016,11 @@ func (am *AuthModule) FormQueryRequest(p *pb.QueryParams, routerID string) (*pb.
 					CacheExpiry: time.Now().Add(FailedProofCacheTime),
 					Valid:       false,
 				}
-				am.bcachemu.Lock()
-				am.bcache[bk] = ci
-				am.bcachemu.Unlock()
-
+				if docaching {
+					am.bcachemu.Lock()
+					am.bcache[bk] = ci
+					am.bcachemu.Unlock()
+				}
 				return nil, wve.Err(wve.NoProofFound, proofresp.Error.Message)
 			}
 
@@ -1011,10 +1033,11 @@ func (am *AuthModule) FormQueryRequest(p *pb.QueryParams, routerID string) (*pb.
 			if ci.ProofExpiry.Before(ci.CacheExpiry) {
 				ci.CacheExpiry = ci.ProofExpiry
 			}
-			am.bcachemu.Lock()
-			am.bcache[bk] = ci
-			am.bcachemu.Unlock()
-
+			if docaching {
+				am.bcachemu.Lock()
+				am.bcache[bk] = ci
+				am.bcachemu.Unlock()
+			}
 			proofder = proofresp.ProofDER
 
 		} else {

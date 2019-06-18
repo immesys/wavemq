@@ -615,17 +615,19 @@ func (t *Terminus) downstreamPeer(ctx context.Context, q *Queue) (err error) {
 		if err != nil {
 			panic(err)
 		}
-		if msg.Message.ProofDER == nil && len(msg.Message.ProofHash) == 16 {
-			cacheKey := peerProofCacheKey{}
-			cacheKey.High = binary.BigEndian.Uint64(msg.Message.ProofHash[:8])
-			cacheKey.Low = binary.BigEndian.Uint64(msg.Message.ProofHash[8:])
-			proof := proofCache[cacheKey]
-			msg.Message.ProofDER = proof
-			msg.Message.ProofHash = nil
-		} else {
-			cacheKey := peerProofCacheKey{}
-			cacheKey.Low, cacheKey.High = cityhash.Hash128(msg.Message.ProofDER)
-			proofCache[cacheKey] = msg.Message.ProofDER
+		if docaching {
+			if msg.Message.ProofDER == nil && len(msg.Message.ProofHash) == 16 {
+				cacheKey := peerProofCacheKey{}
+				cacheKey.High = binary.BigEndian.Uint64(msg.Message.ProofHash[:8])
+				cacheKey.Low = binary.BigEndian.Uint64(msg.Message.ProofHash[8:])
+				proof := proofCache[cacheKey]
+				msg.Message.ProofDER = proof
+				msg.Message.ProofHash = nil
+			} else {
+				cacheKey := peerProofCacheKey{}
+				cacheKey.Low, cacheKey.High = cityhash.Hash128(msg.Message.ProofDER)
+				proofCache[cacheKey] = msg.Message.ProofDER
+			}
 		}
 		msg.Message.Timestamps = append(msg.Message.Timestamps, time.Now().UnixNano())
 		pmDownstreamMessages.Add(1)
@@ -735,8 +737,10 @@ func (t *Terminus) upstreamPeer(ctx context.Context, q *Queue, dr *DesignatedRou
 					cacheKey.Low, cacheKey.High = cityhash.Hash128(m.ProofDER)
 
 					proofDER := m.ProofDER
-					m.ProofDER = nil
-					m.ProofHash = cacheKey.Serialize()
+					if docaching {
+						m.ProofDER = nil
+						m.ProofHash = cacheKey.Serialize()
+					}
 					resp, err := peer.PeerPublish(subctx, &pb.PeerPublishParams{
 						Msg: m,
 					})
