@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/creachadair/cityhash"
+	"github.com/creachadair/cityhash"
 	"github.com/huichen/murmur"
 	"github.com/immesys/wave/eapi"
 	eapipb "github.com/immesys/wave/eapi/pb"

@@ -593,7 +593,9 @@ func (q *Queue) Enqueue(m *pb.Message) error {
 		if ((q.uncommittedSize + q.size) > 0) && ((q.uncommittedSize+q.size+int64(sz) > q.hdr.MaxSize) ||
 			(q.uncommittedLength+q.length+1 > q.hdr.MaxLength)) {
 			pmDroppedMessages.Add(1)
-			q.dequeue()
+			// do not refresh the expiry of the queue if we are dropping messages
+			// due to the queue being full
+			q.dequeue(false)
 			q.drops++
 			continue
 		}
@@ -658,7 +660,8 @@ func (q *Queue) Peek() *pb.Message {
 func (q *Queue) Dequeue() *pb.Message {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	return q.dequeue()
+	// this is an 'active' dequeue, so we refresh the expiry
+	return q.dequeue(true)
 }
 
 //Get the ID of the queue
@@ -936,11 +939,15 @@ func (q *Queue) enqueueCommitted(index int64, m *pb.Message) error {
 }
 
 //Internal dequeue, mutex must be held
-func (q *Queue) dequeue() *pb.Message {
+// if refresh is true, the expiry of the queue will be reset
+func (q *Queue) dequeue(refresh bool) *pb.Message {
 	q.ck()
 	defer q.ck()
 	nw := time.Now()
-	q.hdr.Expires = q.newExpiry()
+	if refresh {
+		q.hdr.Expires = q.newExpiry()
+	}
+	//TODO: is it necessary to update the header if we don't refresh the expiry?
 	q.hdrChanged = true
 	q.lastDequeue = nw
 	if q.head != nil {
