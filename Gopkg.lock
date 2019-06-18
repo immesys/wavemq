@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  digest = "1:4da69b09db63dbb2962242354af4abaf43f8fb8ddfc199bc8857de985ea278c0"
-  name = "bitbucket.org/creachadair/cityhash"
-  packages = ["."]
-  pruneopts = ""
-  revision = "b2a225bf6663ceaaf4ee276eb02d3a3f3920b100"
-  version = "v0.0.1"
-
-[[projects]]
   branch = "master"
   digest = "1:eb2bba7e52ce5e06b6d212dba9adb3314c43b9e649ae90b2a543a275da6db873"
   name = "github.com/AndreasBriese/bbloom"
@@ -40,6 +32,14 @@
   pruneopts = ""
   revision = "5d63dbd981b5c408effbb58c442d54761ff94fbd"
   version = "1.3.2"
+
+[[projects]]
+  digest = "1:bc340bb716b3f984615e4350e1397b898fa08f11d2c6462b46d9c952b54e32e9"
+  name = "github.com/creachadair/cityhash"
+  packages = ["."]
+  pruneopts = ""
+  revision = "3b32d67a45902637ba0bae69f96a90e1681aac77"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:0deddd908b6b4b768cfc272c16ee61e7088a60f7fe2f06c547bd3d8e1f8b8e77"
@@ -575,14 +575,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "bitbucket.org/creachadair/cityhash",
     "github.com/BurntSushi/toml",
     "github.com/cloudflare/cfssl/log",
-    "github.com/davecgh/go-spew/spew",
+    "github.com/creachadair/cityhash",
     "github.com/dgraph-io/badger",
     "github.com/golang/protobuf/proto",
     "github.com/huichen/murmur",
-    "github.com/immesys/asn1",
     "github.com/immesys/wave/consts",
     "github.com/immesys/wave/eapi",
     "github.com/immesys/wave/eapi/pb",

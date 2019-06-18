@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"bitbucket.org/creachadair/cityhash"
+	"github.com/creachadair/cityhash"
 	"github.com/dgraph-io/badger"
 	"github.com/golang/protobuf/proto"
 	"github.com/immesys/wave/wve"
