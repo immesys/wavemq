@@ -94,7 +94,7 @@ message PublishParams{
   bool persist = 6;
   //If specified, this proof will be used instead of building one
   bytes customProofDER = 7;
-
+  bool encryptWithJEDI = 8;
 }
 message PublishResponse{
   Error error = 1;
@@ -107,6 +107,7 @@ message MessageTBS {
   repeated PayloadObject payload = 5;
   //The ID of the router/agent that formed this message
   string originRouter = 6;
+  JEDIData jediData = 7;
 }
 message Message {
   Proof proof = 1;
@@ -122,6 +123,14 @@ message Message {
 message PayloadObject {
   string schema = 1;
   bytes content = 2;
+}
+// JEDIData contains extra information that must be signed and included with
+// JEDI-encrypted messages.
+message JEDIData {
+  int64 timestamp = 1;
+}
+message Payload {
+    repeated PayloadObject objects = 1;
 }
 
 message SubscribeParams {

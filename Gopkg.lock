@@ -73,6 +73,14 @@
   revision = "8198c7b169ec28630587aded52777c5e10a037c2"
 
 [[projects]]
+  digest = "1:fd53b471edb4c28c7d297f617f4da0d33402755f58d6301e7ca1197ef0a90937"
+  name = "github.com/gogo/protobuf"
+  packages = ["proto"]
+  pruneopts = ""
+  revision = "ba06b47c162d49f2af050fb4c75bcbc86a159d5c"
+  version = "v1.2.1"
+
+[[projects]]
   branch = "master"
   digest = "1:107b233e45174dbab5b1324201d092ea9448e58243ab9f039e4c0f332e121e3a"
   name = "github.com/golang/glog"
@@ -210,8 +218,8 @@
   revision = "00c41edb4634c480e27d634cd74c5989b1f746d8"
 
 [[projects]]
-  branch = "master"
-  digest = "1:3543b52a5a445a927690a313b6aff92a3571e09f5a127e03273001a71d13ca75"
+  branch = "feature-jedi-delegation"
+  digest = "1:6f5db3c249a7507e6c2d425ee890b5994cb282aedf0dce932028b0f23301cf2c"
   name = "github.com/immesys/wave"
   packages = [
     "consts",
@@ -219,6 +227,8 @@
     "eapi/pb",
     "engine",
     "iapi",
+    "jedistore",
+    "jediutils",
     "localdb/lls",
     "localdb/poc",
     "policyutils/rtree",
@@ -230,7 +240,8 @@
     "wve",
   ]
   pruneopts = ""
-  revision = "7f45a261d977a80eed7f3cd0f3263c706ed2c7df"
+  revision = "3247c9c9e33a94370507b0399f6160f2058ea7a4"
+  source = "github.com/samkumar/wave"
 
 [[projects]]
   digest = "1:63722a4b1e1717be7b98fc686e0b30d5e7f734b9e93d7dee86293b6deab7ea28"
@@ -368,17 +379,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5e6639fee78e343751208846f9713942f3d6fe41c0a15d798cc3897f78016470"
-  name = "github.com/samkumar/embedded-pairing"
-  packages = [
-    "lang/go/bls12381",
-    "lang/go/cryptutils",
-    "lang/go/internal",
-    "lang/go/lqibe",
-    "lang/go/wkdibe",
-  ]
+  digest = "1:7f8a9fb1e1be04d6f0a20386d3de38ffedba83c09b0eea557867cbafbb885c33"
+  name = "github.com/samkumar/reqcache"
+  packages = ["."]
   pruneopts = ""
-  revision = "af4d4c4b2cb946d62c42118f4189a0134fbd2789"
+  revision = "7b5ae3605bad69a7d84f20856abe27925d22decf"
 
 [[projects]]
   digest = "1:381bcbeb112a51493d9d998bbba207a529c73dbb49b3fd789e48c63fac1f192c"
@@ -411,6 +416,28 @@
   ]
   pruneopts = ""
   revision = "c3a204f8e96543bb0cc090385c001078f184fc46"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f059fca05cef20cb0c500d8a96389da2834a53e911456818f30ee255e5d4af6b"
+  name = "github.com/ucbrise/jedi-pairing"
+  packages = [
+    "lang/go/bls12381",
+    "lang/go/cryptutils",
+    "lang/go/internal",
+    "lang/go/lqibe",
+    "lang/go/wkdibe",
+  ]
+  pruneopts = ""
+  revision = "4c3d16d2a74fea69e1e9693dcc5353e9889757e5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7f6264fd0fbad3c9b5c8cc9b43208c30eca1d6aadb6d13d08d4f3843765b669f"
+  name = "github.com/ucbrise/jedi-protocol-go"
+  packages = ["."]
+  pruneopts = ""
+  revision = "fb4cd35aa58ccb3bb0ca271f1684213c9292c750"
 
 [[projects]]
   digest = "1:e85837cb04b78f61688c6eba93ea9d14f60d611e2aaf8319999b1a60d2dafbfa"
@@ -578,15 +605,16 @@
     "github.com/BurntSushi/toml",
     "github.com/cloudflare/cfssl/log",
     "github.com/creachadair/cityhash",
-    "github.com/davecgh/go-spew/spew",
     "github.com/dgraph-io/badger",
+    "github.com/gogo/protobuf/proto",
     "github.com/golang/protobuf/proto",
     "github.com/huichen/murmur",
-    "github.com/immesys/asn1",
     "github.com/immesys/wave/consts",
     "github.com/immesys/wave/eapi",
     "github.com/immesys/wave/eapi/pb",
     "github.com/immesys/wave/iapi",
+    "github.com/immesys/wave/jedistore",
+    "github.com/immesys/wave/jediutils",
     "github.com/immesys/wave/localdb/lls",
     "github.com/immesys/wave/localdb/poc",
     "github.com/immesys/wave/storage/overlay",
@@ -597,6 +625,7 @@
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/stretchr/testify/require",
+    "github.com/ucbrise/jedi-protocol-go",
     "golang.org/x/crypto/sha3",
     "golang.org/x/net/context",
     "google.golang.org/genproto/googleapis/api/annotations",

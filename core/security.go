@@ -15,16 +15,20 @@ import (
 	"time"
 
 	"github.com/creachadair/cityhash"
+	"github.com/gogo/protobuf/proto"
 	"github.com/huichen/murmur"
 	"github.com/immesys/wave/eapi"
 	eapipb "github.com/immesys/wave/eapi/pb"
 	"github.com/immesys/wave/iapi"
+	"github.com/immesys/wave/jedistore"
+	"github.com/immesys/wave/jediutils"
 	"github.com/immesys/wave/localdb/lls"
 	"github.com/immesys/wave/localdb/poc"
 	"github.com/immesys/wave/storage/overlay"
 	"github.com/immesys/wave/waved"
 	"github.com/immesys/wave/wve"
 	pb "github.com/immesys/wavemq/mqpb"
+	"github.com/ucbrise/jedi-protocol-go"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -61,6 +65,11 @@ type AuthModule struct {
 	//Hash of perspective DER -> public entity hash
 	phashcachemu sync.RWMutex
 	phashcache   map[uint32][]byte
+
+	// State for JEDI
+	jediClientsLock sync.RWMutex
+	jediClients     map[string]*jedi.ClientState
+	jediPublicInfo  *jedistore.WAVEPublicInfo
 }
 
 type icacheKey struct {
@@ -105,13 +114,48 @@ func NewAuthModule(cfg *waved.Configuration) (*AuthModule, error) {
 	ws := poc.NewPOC(llsdb)
 	eapi := eapi.NewEAPI(ws)
 	return &AuthModule{
-		cfg:           cfg,
-		wave:          eapi,
-		icache:        make(map[icacheKey]*icacheItem),
-		bcache:        make(map[bcacheKey]*bcacheItem),
-		routingProofs: make(map[string][]byte),
-		phashcache:    make(map[uint32][]byte),
+		cfg:            cfg,
+		wave:           eapi,
+		icache:         make(map[icacheKey]*icacheItem),
+		bcache:         make(map[bcacheKey]*bcacheItem),
+		routingProofs:  make(map[string][]byte),
+		phashcache:     make(map[uint32][]byte),
+		jediClients:    make(map[string]*jedi.ClientState),
+		jediPublicInfo: jedistore.NewWAVEPublicInfo(eapi.GetEngineNoPerspective()),
 	}, nil
+}
+
+func (am *AuthModule) GetJEDIClient(ctx context.Context, perspective *eapipb.Perspective) (*jedi.ClientState, error) {
+	var err error
+
+	var serialized []byte
+	if serialized, err = proto.Marshal(perspective); err != nil {
+		return nil, err
+	}
+
+	mapkey := string(serialized)
+
+	am.jediClientsLock.RLock()
+	client, ok := am.jediClients[mapkey]
+	am.jediClientsLock.RUnlock()
+
+	if !ok {
+		am.jediClientsLock.Lock()
+		defer am.jediClientsLock.Unlock()
+
+		client, ok = am.jediClients[mapkey]
+		if !ok {
+			eng, werr := am.wave.GetEngine(ctx, perspective)
+			if werr != nil {
+				return nil, werr
+			}
+			store := jedistore.NewWAVEKeyStore(eng)
+			client = jedi.NewClientState(am.jediPublicInfo, store, jediutils.WAVEPatternEncoderSingleton, 32<<20)
+			am.jediClients[mapkey] = client
+		}
+	}
+
+	return client, nil
 }
 
 func (am *AuthModule) AddDesignatedRoutingNamespace(filename string) (ns string, err error) {
@@ -251,6 +295,11 @@ func (am *AuthModule) CheckMessage(m *pb.Message) wve.WVE {
 		hash.Write(po.Content)
 	}
 	hash.Write([]byte(m.Tbs.OriginRouter))
+	if m.Tbs.JediData != nil {
+		buffer := make([]byte, 8)
+		binary.LittleEndian.PutUint64(buffer, uint64(m.Tbs.JediData.Timestamp))
+		hash.Write(buffer)
+	}
 	digest := hash.Sum(nil)
 	resp, err := am.wave.VerifySignature(ctx, &eapipb.VerifySignatureParams{
 		Signer: m.Tbs.SourceEntity,
@@ -574,6 +623,27 @@ func (am *AuthModule) PrepareMessage(persp *pb.Perspective, m *pb.Message) (*pb.
 			})
 		}
 	}
+	if m.Tbs.JediData != nil {
+		if len(m.Tbs.Payload) != 2 || m.Tbs.Payload[0].Schema != "jedi:encryptedKey" || m.Tbs.Payload[1].Schema != "jedi:encryptedMessage" {
+			return nil, wve.Err(wve.MessageDecryptionError, "malformed message for JEDI decryption")
+		}
+		client, err := am.GetJEDIClient(context.TODO(), perspective)
+		if err != nil {
+			return nil, wve.ErrW(wve.MessageDecryptionError, "could not obtain JEDI state", err)
+		}
+		timestamp := time.Unix(m.Tbs.JediData.Timestamp, 0)
+		encryptedKey := m.Tbs.Payload[0].Content
+		encryptedMessage := m.Tbs.Payload[1].Content
+		decrypted, err := client.DecryptSeparated(context.TODO(), m.Tbs.Namespace, m.Tbs.Uri, timestamp, encryptedKey, encryptedMessage)
+		if err != nil {
+			return nil, wve.ErrW(wve.MessageDecryptionError, "could not decrypt JEDI message", err)
+		}
+		payload := new(pb.Payload)
+		if err = proto.Unmarshal(decrypted, payload); err != nil {
+			return nil, wve.ErrW(wve.MessageDecryptionError, "could not unmarshal payload objects after JEDI decryption", err)
+		}
+		decryptedPayload = payload.Objects
+	}
 	return &pb.Message{
 		Signature:           m.Signature,
 		Persist:             m.Persist,
@@ -586,6 +656,7 @@ func (am *AuthModule) PrepareMessage(persp *pb.Perspective, m *pb.Message) (*pb.
 			Uri:          m.Tbs.Uri,
 			Payload:      decryptedPayload,
 			OriginRouter: m.Tbs.OriginRouter,
+			JediData:     m.Tbs.JediData,
 		},
 	}, nil
 }
@@ -732,6 +803,34 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 			})
 		}
 	}
+	var jediData *pb.JEDIData
+	if p.EncryptWithJEDI {
+		jediClient, err := am.GetJEDIClient(context.TODO(), perspective)
+		if err != nil {
+			return nil, wve.ErrW(wve.MessageEncryptionError, "could not obtain JEDI state", err)
+		}
+		payload := &pb.Payload{Objects: p.Content}
+		message, err := proto.Marshal(payload)
+		if err != nil {
+			return nil, wve.ErrW(wve.MessageEncryptionError, "could not marshal payload objects for JEDI encryption", err)
+		}
+		timestamp := time.Now()
+		jediData = &pb.JEDIData{Timestamp: timestamp.Unix()}
+		encrypted, err := jediClient.Encrypt(context.TODO(), p.Namespace, p.Uri, timestamp, message)
+		if err != nil {
+			return nil, wve.ErrW(wve.MessageEncryptionError, "could not encrypt message with JEDI", err)
+		}
+		keyPO := &pb.PayloadObject{
+			Schema:  "jedi:encryptedKey",
+			Content: encrypted[:jedi.EncryptedKeySize],
+		}
+		messagePO := &pb.PayloadObject{
+			Schema:  "jedi:encryptedMessage",
+			Content: encrypted[jedi.EncryptedKeySize:],
+		}
+		encryptedPayload = []*pb.PayloadObject{keyPO, messagePO}
+	}
+
 	hash := sha3.New256()
 	hash.Write(realhash)
 	hash.Write(p.Namespace)
@@ -741,6 +840,11 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 		hash.Write(po.Content)
 	}
 	hash.Write([]byte(routerID))
+	if jediData != nil {
+		buffer := make([]byte, 8)
+		binary.LittleEndian.PutUint64(buffer, uint64(jediData.Timestamp))
+		hash.Write(buffer)
+	}
 	digest := hash.Sum(nil)
 
 	signresp, err := am.wave.Sign(context.Background(), &eapipb.SignParams{
@@ -766,6 +870,7 @@ func (am *AuthModule) FormMessage(p *pb.PublishParams, routerID string) (*pb.Mes
 			Uri:          p.Uri,
 			Payload:      encryptedPayload,
 			OriginRouter: routerID,
+			JediData:     jediData,
 		},
 	}, nil
 }

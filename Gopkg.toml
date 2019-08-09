@@ -1,3 +1,8 @@
 [[constraint]]
  name = "github.com/immesys/wave"
- branch = "master"
+ source = "github.com/samkumar/wave"
+ branch = "feature-jedi-delegation"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/ucbrise/jedi-protocol-go"

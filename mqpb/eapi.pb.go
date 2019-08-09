@@ -3,10 +3,6 @@
 
 package mqpb
 
-/*
-Version 1.0
-*/
-
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
@@ -22,42 +18,14 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type CompactProofParams struct {
-	DER                  []byte   `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	DER []byte `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
 }
 
-func (m *CompactProofParams) Reset()         { *m = CompactProofParams{} }
-func (m *CompactProofParams) String() string { return proto.CompactTextString(m) }
-func (*CompactProofParams) ProtoMessage()    {}
-func (*CompactProofParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{0}
-}
-func (m *CompactProofParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CompactProofParams.Unmarshal(m, b)
-}
-func (m *CompactProofParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CompactProofParams.Marshal(b, m, deterministic)
-}
-func (dst *CompactProofParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CompactProofParams.Merge(dst, src)
-}
-func (m *CompactProofParams) XXX_Size() int {
-	return xxx_messageInfo_CompactProofParams.Size(m)
-}
-func (m *CompactProofParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_CompactProofParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CompactProofParams proto.InternalMessageInfo
+func (m *CompactProofParams) Reset()                    { *m = CompactProofParams{} }
+func (m *CompactProofParams) String() string            { return proto.CompactTextString(m) }
+func (*CompactProofParams) ProtoMessage()               {}
+func (*CompactProofParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *CompactProofParams) GetDER() []byte {
 	if m != nil {
@@ -67,36 +35,14 @@ func (m *CompactProofParams) GetDER() []byte {
 }
 
 type CompactProofResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	ProofDER             []byte   `protobuf:"bytes,2,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error    *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	ProofDER []byte `protobuf:"bytes,2,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
 }
 
-func (m *CompactProofResponse) Reset()         { *m = CompactProofResponse{} }
-func (m *CompactProofResponse) String() string { return proto.CompactTextString(m) }
-func (*CompactProofResponse) ProtoMessage()    {}
-func (*CompactProofResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{1}
-}
-func (m *CompactProofResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CompactProofResponse.Unmarshal(m, b)
-}
-func (m *CompactProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CompactProofResponse.Marshal(b, m, deterministic)
-}
-func (dst *CompactProofResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CompactProofResponse.Merge(dst, src)
-}
-func (m *CompactProofResponse) XXX_Size() int {
-	return xxx_messageInfo_CompactProofResponse.Size(m)
-}
-func (m *CompactProofResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CompactProofResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CompactProofResponse proto.InternalMessageInfo
+func (m *CompactProofResponse) Reset()                    { *m = CompactProofResponse{} }
+func (m *CompactProofResponse) String() string            { return proto.CompactTextString(m) }
+func (*CompactProofResponse) ProtoMessage()               {}
+func (*CompactProofResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 func (m *CompactProofResponse) GetError() *Error {
 	if m != nil {
@@ -113,38 +59,16 @@ func (m *CompactProofResponse) GetProofDER() []byte {
 }
 
 type RevokeParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	AttestationHash      []byte       `protobuf:"bytes,2,opt,name=attestationHash,proto3" json:"attestationHash,omitempty"`
-	NameDeclarationHash  []byte       `protobuf:"bytes,3,opt,name=nameDeclarationHash,proto3" json:"nameDeclarationHash,omitempty"`
-	RevokePerspective    bool         `protobuf:"varint,4,opt,name=revokePerspective,proto3" json:"revokePerspective,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective         *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	AttestationHash     []byte       `protobuf:"bytes,2,opt,name=attestationHash,proto3" json:"attestationHash,omitempty"`
+	NameDeclarationHash []byte       `protobuf:"bytes,3,opt,name=nameDeclarationHash,proto3" json:"nameDeclarationHash,omitempty"`
+	RevokePerspective   bool         `protobuf:"varint,4,opt,name=revokePerspective" json:"revokePerspective,omitempty"`
 }
 
-func (m *RevokeParams) Reset()         { *m = RevokeParams{} }
-func (m *RevokeParams) String() string { return proto.CompactTextString(m) }
-func (*RevokeParams) ProtoMessage()    {}
-func (*RevokeParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{2}
-}
-func (m *RevokeParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RevokeParams.Unmarshal(m, b)
-}
-func (m *RevokeParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RevokeParams.Marshal(b, m, deterministic)
-}
-func (dst *RevokeParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeParams.Merge(dst, src)
-}
-func (m *RevokeParams) XXX_Size() int {
-	return xxx_messageInfo_RevokeParams.Size(m)
-}
-func (m *RevokeParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_RevokeParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RevokeParams proto.InternalMessageInfo
+func (m *RevokeParams) Reset()                    { *m = RevokeParams{} }
+func (m *RevokeParams) String() string            { return proto.CompactTextString(m) }
+func (*RevokeParams) ProtoMessage()               {}
+func (*RevokeParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
 
 func (m *RevokeParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -175,35 +99,13 @@ func (m *RevokeParams) GetRevokePerspective() bool {
 }
 
 type RevokeResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
 }
 
-func (m *RevokeResponse) Reset()         { *m = RevokeResponse{} }
-func (m *RevokeResponse) String() string { return proto.CompactTextString(m) }
-func (*RevokeResponse) ProtoMessage()    {}
-func (*RevokeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{3}
-}
-func (m *RevokeResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RevokeResponse.Unmarshal(m, b)
-}
-func (m *RevokeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RevokeResponse.Marshal(b, m, deterministic)
-}
-func (dst *RevokeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeResponse.Merge(dst, src)
-}
-func (m *RevokeResponse) XXX_Size() int {
-	return xxx_messageInfo_RevokeResponse.Size(m)
-}
-func (m *RevokeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RevokeResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RevokeResponse proto.InternalMessageInfo
+func (m *RevokeResponse) Reset()                    { *m = RevokeResponse{} }
+func (m *RevokeResponse) String() string            { return proto.CompactTextString(m) }
+func (*RevokeResponse) ProtoMessage()               {}
+func (*RevokeResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
 
 func (m *RevokeResponse) GetError() *Error {
 	if m != nil {
@@ -213,36 +115,14 @@ func (m *RevokeResponse) GetError() *Error {
 }
 
 type ResolveReverseNameParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	Hash                 []byte       `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	Hash        []byte       `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *ResolveReverseNameParams) Reset()         { *m = ResolveReverseNameParams{} }
-func (m *ResolveReverseNameParams) String() string { return proto.CompactTextString(m) }
-func (*ResolveReverseNameParams) ProtoMessage()    {}
-func (*ResolveReverseNameParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{4}
-}
-func (m *ResolveReverseNameParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveReverseNameParams.Unmarshal(m, b)
-}
-func (m *ResolveReverseNameParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveReverseNameParams.Marshal(b, m, deterministic)
-}
-func (dst *ResolveReverseNameParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveReverseNameParams.Merge(dst, src)
-}
-func (m *ResolveReverseNameParams) XXX_Size() int {
-	return xxx_messageInfo_ResolveReverseNameParams.Size(m)
-}
-func (m *ResolveReverseNameParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveReverseNameParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveReverseNameParams proto.InternalMessageInfo
+func (m *ResolveReverseNameParams) Reset()                    { *m = ResolveReverseNameParams{} }
+func (m *ResolveReverseNameParams) String() string            { return proto.CompactTextString(m) }
+func (*ResolveReverseNameParams) ProtoMessage()               {}
+func (*ResolveReverseNameParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
 
 func (m *ResolveReverseNameParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -259,36 +139,14 @@ func (m *ResolveReverseNameParams) GetHash() []byte {
 }
 
 type ResolveReverseNameResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Name  string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 }
 
-func (m *ResolveReverseNameResponse) Reset()         { *m = ResolveReverseNameResponse{} }
-func (m *ResolveReverseNameResponse) String() string { return proto.CompactTextString(m) }
-func (*ResolveReverseNameResponse) ProtoMessage()    {}
-func (*ResolveReverseNameResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{5}
-}
-func (m *ResolveReverseNameResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveReverseNameResponse.Unmarshal(m, b)
-}
-func (m *ResolveReverseNameResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveReverseNameResponse.Marshal(b, m, deterministic)
-}
-func (dst *ResolveReverseNameResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveReverseNameResponse.Merge(dst, src)
-}
-func (m *ResolveReverseNameResponse) XXX_Size() int {
-	return xxx_messageInfo_ResolveReverseNameResponse.Size(m)
-}
-func (m *ResolveReverseNameResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveReverseNameResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveReverseNameResponse proto.InternalMessageInfo
+func (m *ResolveReverseNameResponse) Reset()                    { *m = ResolveReverseNameResponse{} }
+func (m *ResolveReverseNameResponse) String() string            { return proto.CompactTextString(m) }
+func (*ResolveReverseNameResponse) ProtoMessage()               {}
+func (*ResolveReverseNameResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{5} }
 
 func (m *ResolveReverseNameResponse) GetError() *Error {
 	if m != nil {
@@ -305,37 +163,15 @@ func (m *ResolveReverseNameResponse) GetName() string {
 }
 
 type MarkEntityInterestingParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	Entity               []byte       `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
-	EntityLocation       *Location    `protobuf:"bytes,3,opt,name=entityLocation,proto3" json:"entityLocation,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective    *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	Entity         []byte       `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
+	EntityLocation *Location    `protobuf:"bytes,3,opt,name=entityLocation" json:"entityLocation,omitempty"`
 }
 
-func (m *MarkEntityInterestingParams) Reset()         { *m = MarkEntityInterestingParams{} }
-func (m *MarkEntityInterestingParams) String() string { return proto.CompactTextString(m) }
-func (*MarkEntityInterestingParams) ProtoMessage()    {}
-func (*MarkEntityInterestingParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{6}
-}
-func (m *MarkEntityInterestingParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MarkEntityInterestingParams.Unmarshal(m, b)
-}
-func (m *MarkEntityInterestingParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MarkEntityInterestingParams.Marshal(b, m, deterministic)
-}
-func (dst *MarkEntityInterestingParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarkEntityInterestingParams.Merge(dst, src)
-}
-func (m *MarkEntityInterestingParams) XXX_Size() int {
-	return xxx_messageInfo_MarkEntityInterestingParams.Size(m)
-}
-func (m *MarkEntityInterestingParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_MarkEntityInterestingParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MarkEntityInterestingParams proto.InternalMessageInfo
+func (m *MarkEntityInterestingParams) Reset()                    { *m = MarkEntityInterestingParams{} }
+func (m *MarkEntityInterestingParams) String() string            { return proto.CompactTextString(m) }
+func (*MarkEntityInterestingParams) ProtoMessage()               {}
+func (*MarkEntityInterestingParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{6} }
 
 func (m *MarkEntityInterestingParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -359,35 +195,13 @@ func (m *MarkEntityInterestingParams) GetEntityLocation() *Location {
 }
 
 type MarkEntityInterestingResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
 }
 
-func (m *MarkEntityInterestingResponse) Reset()         { *m = MarkEntityInterestingResponse{} }
-func (m *MarkEntityInterestingResponse) String() string { return proto.CompactTextString(m) }
-func (*MarkEntityInterestingResponse) ProtoMessage()    {}
-func (*MarkEntityInterestingResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{7}
-}
-func (m *MarkEntityInterestingResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MarkEntityInterestingResponse.Unmarshal(m, b)
-}
-func (m *MarkEntityInterestingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MarkEntityInterestingResponse.Marshal(b, m, deterministic)
-}
-func (dst *MarkEntityInterestingResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarkEntityInterestingResponse.Merge(dst, src)
-}
-func (m *MarkEntityInterestingResponse) XXX_Size() int {
-	return xxx_messageInfo_MarkEntityInterestingResponse.Size(m)
-}
-func (m *MarkEntityInterestingResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MarkEntityInterestingResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MarkEntityInterestingResponse proto.InternalMessageInfo
+func (m *MarkEntityInterestingResponse) Reset()                    { *m = MarkEntityInterestingResponse{} }
+func (m *MarkEntityInterestingResponse) String() string            { return proto.CompactTextString(m) }
+func (*MarkEntityInterestingResponse) ProtoMessage()               {}
+func (*MarkEntityInterestingResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{7} }
 
 func (m *MarkEntityInterestingResponse) GetError() *Error {
 	if m != nil {
@@ -397,46 +211,24 @@ func (m *MarkEntityInterestingResponse) GetError() *Error {
 }
 
 type CreateNameDeclarationParams struct {
-	Perspective     *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	Name            string       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Perspective     *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	Name            string       `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	Subject         []byte       `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
-	SubjectLocation *Location    `protobuf:"bytes,4,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
+	SubjectLocation *Location    `protobuf:"bytes,4,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
 	// ms since epoch, if omitted default = now
-	ValidFrom int64 `protobuf:"varint,5,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
+	ValidFrom int64 `protobuf:"varint,5,opt,name=validFrom" json:"validFrom,omitempty"`
 	// ms since epoch if omitted default = now+3 years
-	ValidUntil int64 `protobuf:"varint,6,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
+	ValidUntil int64 `protobuf:"varint,6,opt,name=validUntil" json:"validUntil,omitempty"`
 	// if specified, the name declaration will be encrypted
-	Namespace            []byte    `protobuf:"bytes,7,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	NamespaceLocation    *Location `protobuf:"bytes,8,opt,name=namespaceLocation,proto3" json:"namespaceLocation,omitempty"`
-	Partition            [][]byte  `protobuf:"bytes,9,rep,name=partition,proto3" json:"partition,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Namespace         []byte    `protobuf:"bytes,7,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	NamespaceLocation *Location `protobuf:"bytes,8,opt,name=namespaceLocation" json:"namespaceLocation,omitempty"`
+	Partition         [][]byte  `protobuf:"bytes,9,rep,name=partition,proto3" json:"partition,omitempty"`
 }
 
-func (m *CreateNameDeclarationParams) Reset()         { *m = CreateNameDeclarationParams{} }
-func (m *CreateNameDeclarationParams) String() string { return proto.CompactTextString(m) }
-func (*CreateNameDeclarationParams) ProtoMessage()    {}
-func (*CreateNameDeclarationParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{8}
-}
-func (m *CreateNameDeclarationParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateNameDeclarationParams.Unmarshal(m, b)
-}
-func (m *CreateNameDeclarationParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateNameDeclarationParams.Marshal(b, m, deterministic)
-}
-func (dst *CreateNameDeclarationParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateNameDeclarationParams.Merge(dst, src)
-}
-func (m *CreateNameDeclarationParams) XXX_Size() int {
-	return xxx_messageInfo_CreateNameDeclarationParams.Size(m)
-}
-func (m *CreateNameDeclarationParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateNameDeclarationParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateNameDeclarationParams proto.InternalMessageInfo
+func (m *CreateNameDeclarationParams) Reset()                    { *m = CreateNameDeclarationParams{} }
+func (m *CreateNameDeclarationParams) String() string            { return proto.CompactTextString(m) }
+func (*CreateNameDeclarationParams) ProtoMessage()               {}
+func (*CreateNameDeclarationParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{8} }
 
 func (m *CreateNameDeclarationParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -502,37 +294,15 @@ func (m *CreateNameDeclarationParams) GetPartition() [][]byte {
 }
 
 type CreateNameDeclarationResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	DER                  []byte   `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
-	Hash                 []byte   `protobuf:"bytes,3,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	DER   []byte `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
+	Hash  []byte `protobuf:"bytes,3,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *CreateNameDeclarationResponse) Reset()         { *m = CreateNameDeclarationResponse{} }
-func (m *CreateNameDeclarationResponse) String() string { return proto.CompactTextString(m) }
-func (*CreateNameDeclarationResponse) ProtoMessage()    {}
-func (*CreateNameDeclarationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{9}
-}
-func (m *CreateNameDeclarationResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateNameDeclarationResponse.Unmarshal(m, b)
-}
-func (m *CreateNameDeclarationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateNameDeclarationResponse.Marshal(b, m, deterministic)
-}
-func (dst *CreateNameDeclarationResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateNameDeclarationResponse.Merge(dst, src)
-}
-func (m *CreateNameDeclarationResponse) XXX_Size() int {
-	return xxx_messageInfo_CreateNameDeclarationResponse.Size(m)
-}
-func (m *CreateNameDeclarationResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateNameDeclarationResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateNameDeclarationResponse proto.InternalMessageInfo
+func (m *CreateNameDeclarationResponse) Reset()                    { *m = CreateNameDeclarationResponse{} }
+func (m *CreateNameDeclarationResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateNameDeclarationResponse) ProtoMessage()               {}
+func (*CreateNameDeclarationResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{9} }
 
 func (m *CreateNameDeclarationResponse) GetError() *Error {
 	if m != nil {
@@ -556,38 +326,16 @@ func (m *CreateNameDeclarationResponse) GetHash() []byte {
 }
 
 type ResolveNameParams struct {
-	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	Name        string       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	Name        string       `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	// If omitted, the perspective entity is used
-	TopLevelAttester     []byte   `protobuf:"bytes,3,opt,name=topLevelAttester,proto3" json:"topLevelAttester,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	TopLevelAttester []byte `protobuf:"bytes,3,opt,name=topLevelAttester,proto3" json:"topLevelAttester,omitempty"`
 }
 
-func (m *ResolveNameParams) Reset()         { *m = ResolveNameParams{} }
-func (m *ResolveNameParams) String() string { return proto.CompactTextString(m) }
-func (*ResolveNameParams) ProtoMessage()    {}
-func (*ResolveNameParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{10}
-}
-func (m *ResolveNameParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveNameParams.Unmarshal(m, b)
-}
-func (m *ResolveNameParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveNameParams.Marshal(b, m, deterministic)
-}
-func (dst *ResolveNameParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveNameParams.Merge(dst, src)
-}
-func (m *ResolveNameParams) XXX_Size() int {
-	return xxx_messageInfo_ResolveNameParams.Size(m)
-}
-func (m *ResolveNameParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveNameParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveNameParams proto.InternalMessageInfo
+func (m *ResolveNameParams) Reset()                    { *m = ResolveNameParams{} }
+func (m *ResolveNameParams) String() string            { return proto.CompactTextString(m) }
+func (*ResolveNameParams) ProtoMessage()               {}
+func (*ResolveNameParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{10} }
 
 func (m *ResolveNameParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -611,46 +359,24 @@ func (m *ResolveNameParams) GetTopLevelAttester() []byte {
 }
 
 type NameDeclaration struct {
-	Hash                 []byte                   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Name                 string                   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Subject              []byte                   `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
-	SubjectLocation      *Location                `protobuf:"bytes,4,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
-	Attester             []byte                   `protobuf:"bytes,5,opt,name=attester,proto3" json:"attester,omitempty"`
-	AttesterLocation     *Location                `protobuf:"bytes,6,opt,name=attesterLocation,proto3" json:"attesterLocation,omitempty"`
-	ValidFrom            int64                    `protobuf:"varint,7,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
-	ValidUntil           int64                    `protobuf:"varint,8,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	Namespace            []byte                   `protobuf:"bytes,9,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	NamespaceLocation    *Location                `protobuf:"bytes,10,opt,name=namespaceLocation,proto3" json:"namespaceLocation,omitempty"`
-	Partition            [][]byte                 `protobuf:"bytes,11,rep,name=partition,proto3" json:"partition,omitempty"`
-	Validity             *NameDeclarationValidity `protobuf:"bytes,12,opt,name=validity,proto3" json:"validity,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	Hash              []byte                   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Name              string                   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Subject           []byte                   `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
+	SubjectLocation   *Location                `protobuf:"bytes,4,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
+	Attester          []byte                   `protobuf:"bytes,5,opt,name=attester,proto3" json:"attester,omitempty"`
+	AttesterLocation  *Location                `protobuf:"bytes,6,opt,name=attesterLocation" json:"attesterLocation,omitempty"`
+	ValidFrom         int64                    `protobuf:"varint,7,opt,name=validFrom" json:"validFrom,omitempty"`
+	ValidUntil        int64                    `protobuf:"varint,8,opt,name=validUntil" json:"validUntil,omitempty"`
+	Namespace         []byte                   `protobuf:"bytes,9,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	NamespaceLocation *Location                `protobuf:"bytes,10,opt,name=namespaceLocation" json:"namespaceLocation,omitempty"`
+	Partition         [][]byte                 `protobuf:"bytes,11,rep,name=partition,proto3" json:"partition,omitempty"`
+	Validity          *NameDeclarationValidity `protobuf:"bytes,12,opt,name=validity" json:"validity,omitempty"`
 }
 
-func (m *NameDeclaration) Reset()         { *m = NameDeclaration{} }
-func (m *NameDeclaration) String() string { return proto.CompactTextString(m) }
-func (*NameDeclaration) ProtoMessage()    {}
-func (*NameDeclaration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{11}
-}
-func (m *NameDeclaration) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NameDeclaration.Unmarshal(m, b)
-}
-func (m *NameDeclaration) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NameDeclaration.Marshal(b, m, deterministic)
-}
-func (dst *NameDeclaration) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NameDeclaration.Merge(dst, src)
-}
-func (m *NameDeclaration) XXX_Size() int {
-	return xxx_messageInfo_NameDeclaration.Size(m)
-}
-func (m *NameDeclaration) XXX_DiscardUnknown() {
-	xxx_messageInfo_NameDeclaration.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NameDeclaration proto.InternalMessageInfo
+func (m *NameDeclaration) Reset()                    { *m = NameDeclaration{} }
+func (m *NameDeclaration) String() string            { return proto.CompactTextString(m) }
+func (*NameDeclaration) ProtoMessage()               {}
+func (*NameDeclaration) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{11} }
 
 func (m *NameDeclaration) GetHash() []byte {
 	if m != nil {
@@ -737,38 +463,16 @@ func (m *NameDeclaration) GetValidity() *NameDeclarationValidity {
 }
 
 type ResolveNameResponse struct {
-	Error                *Error             `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Entity               *Entity            `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
-	Derivation           []*NameDeclaration `protobuf:"bytes,3,rep,name=derivation,proto3" json:"derivation,omitempty"`
-	Location             *Location          `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+	Error      *Error             `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Entity     *Entity            `protobuf:"bytes,2,opt,name=entity" json:"entity,omitempty"`
+	Derivation []*NameDeclaration `protobuf:"bytes,3,rep,name=derivation" json:"derivation,omitempty"`
+	Location   *Location          `protobuf:"bytes,4,opt,name=location" json:"location,omitempty"`
 }
 
-func (m *ResolveNameResponse) Reset()         { *m = ResolveNameResponse{} }
-func (m *ResolveNameResponse) String() string { return proto.CompactTextString(m) }
-func (*ResolveNameResponse) ProtoMessage()    {}
-func (*ResolveNameResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{12}
-}
-func (m *ResolveNameResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveNameResponse.Unmarshal(m, b)
-}
-func (m *ResolveNameResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveNameResponse.Marshal(b, m, deterministic)
-}
-func (dst *ResolveNameResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveNameResponse.Merge(dst, src)
-}
-func (m *ResolveNameResponse) XXX_Size() int {
-	return xxx_messageInfo_ResolveNameResponse.Size(m)
-}
-func (m *ResolveNameResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveNameResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveNameResponse proto.InternalMessageInfo
+func (m *ResolveNameResponse) Reset()                    { *m = ResolveNameResponse{} }
+func (m *ResolveNameResponse) String() string            { return proto.CompactTextString(m) }
+func (*ResolveNameResponse) ProtoMessage()               {}
+func (*ResolveNameResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{12} }
 
 func (m *ResolveNameResponse) GetError() *Error {
 	if m != nil {
@@ -799,36 +503,14 @@ func (m *ResolveNameResponse) GetLocation() *Location {
 }
 
 type ResolveHashParams struct {
-	Hash                 []byte       `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Perspective          *Perspective `protobuf:"bytes,2,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Hash        []byte       `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Perspective *Perspective `protobuf:"bytes,2,opt,name=perspective" json:"perspective,omitempty"`
 }
 
-func (m *ResolveHashParams) Reset()         { *m = ResolveHashParams{} }
-func (m *ResolveHashParams) String() string { return proto.CompactTextString(m) }
-func (*ResolveHashParams) ProtoMessage()    {}
-func (*ResolveHashParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{13}
-}
-func (m *ResolveHashParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveHashParams.Unmarshal(m, b)
-}
-func (m *ResolveHashParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveHashParams.Marshal(b, m, deterministic)
-}
-func (dst *ResolveHashParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveHashParams.Merge(dst, src)
-}
-func (m *ResolveHashParams) XXX_Size() int {
-	return xxx_messageInfo_ResolveHashParams.Size(m)
-}
-func (m *ResolveHashParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveHashParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveHashParams proto.InternalMessageInfo
+func (m *ResolveHashParams) Reset()                    { *m = ResolveHashParams{} }
+func (m *ResolveHashParams) String() string            { return proto.CompactTextString(m) }
+func (*ResolveHashParams) ProtoMessage()               {}
+func (*ResolveHashParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{13} }
 
 func (m *ResolveHashParams) GetHash() []byte {
 	if m != nil {
@@ -845,38 +527,16 @@ func (m *ResolveHashParams) GetPerspective() *Perspective {
 }
 
 type ResolveHashResponse struct {
-	Error                *Error       `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Location             *Location    `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	Entity               *Entity      `protobuf:"bytes,3,opt,name=entity,proto3" json:"entity,omitempty"`
-	Attestation          *Attestation `protobuf:"bytes,4,opt,name=attestation,proto3" json:"attestation,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Error       *Error       `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Location    *Location    `protobuf:"bytes,2,opt,name=location" json:"location,omitempty"`
+	Entity      *Entity      `protobuf:"bytes,3,opt,name=entity" json:"entity,omitempty"`
+	Attestation *Attestation `protobuf:"bytes,4,opt,name=attestation" json:"attestation,omitempty"`
 }
 
-func (m *ResolveHashResponse) Reset()         { *m = ResolveHashResponse{} }
-func (m *ResolveHashResponse) String() string { return proto.CompactTextString(m) }
-func (*ResolveHashResponse) ProtoMessage()    {}
-func (*ResolveHashResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{14}
-}
-func (m *ResolveHashResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResolveHashResponse.Unmarshal(m, b)
-}
-func (m *ResolveHashResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResolveHashResponse.Marshal(b, m, deterministic)
-}
-func (dst *ResolveHashResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResolveHashResponse.Merge(dst, src)
-}
-func (m *ResolveHashResponse) XXX_Size() int {
-	return xxx_messageInfo_ResolveHashResponse.Size(m)
-}
-func (m *ResolveHashResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResolveHashResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResolveHashResponse proto.InternalMessageInfo
+func (m *ResolveHashResponse) Reset()                    { *m = ResolveHashResponse{} }
+func (m *ResolveHashResponse) String() string            { return proto.CompactTextString(m) }
+func (*ResolveHashResponse) ProtoMessage()               {}
+func (*ResolveHashResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{14} }
 
 func (m *ResolveHashResponse) GetError() *Error {
 	if m != nil {
@@ -907,37 +567,15 @@ func (m *ResolveHashResponse) GetAttestation() *Attestation {
 }
 
 type InspectParams struct {
-	Content              []byte   `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
-	ProverKey            []byte   `protobuf:"bytes,2,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
-	VerifierKey          []byte   `protobuf:"bytes,3,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Content     []byte `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	ProverKey   []byte `protobuf:"bytes,2,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
+	VerifierKey []byte `protobuf:"bytes,3,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
 }
 
-func (m *InspectParams) Reset()         { *m = InspectParams{} }
-func (m *InspectParams) String() string { return proto.CompactTextString(m) }
-func (*InspectParams) ProtoMessage()    {}
-func (*InspectParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{15}
-}
-func (m *InspectParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_InspectParams.Unmarshal(m, b)
-}
-func (m *InspectParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_InspectParams.Marshal(b, m, deterministic)
-}
-func (dst *InspectParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InspectParams.Merge(dst, src)
-}
-func (m *InspectParams) XXX_Size() int {
-	return xxx_messageInfo_InspectParams.Size(m)
-}
-func (m *InspectParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_InspectParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_InspectParams proto.InternalMessageInfo
+func (m *InspectParams) Reset()                    { *m = InspectParams{} }
+func (m *InspectParams) String() string            { return proto.CompactTextString(m) }
+func (*InspectParams) ProtoMessage()               {}
+func (*InspectParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{15} }
 
 func (m *InspectParams) GetContent() []byte {
 	if m != nil {
@@ -961,37 +599,15 @@ func (m *InspectParams) GetVerifierKey() []byte {
 }
 
 type InspectResponse struct {
-	Error                *Error       `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Entity               *Entity      `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
-	Attestation          *Attestation `protobuf:"bytes,3,opt,name=attestation,proto3" json:"attestation,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Error       *Error       `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Entity      *Entity      `protobuf:"bytes,2,opt,name=entity" json:"entity,omitempty"`
+	Attestation *Attestation `protobuf:"bytes,3,opt,name=attestation" json:"attestation,omitempty"`
 }
 
-func (m *InspectResponse) Reset()         { *m = InspectResponse{} }
-func (m *InspectResponse) String() string { return proto.CompactTextString(m) }
-func (*InspectResponse) ProtoMessage()    {}
-func (*InspectResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{16}
-}
-func (m *InspectResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_InspectResponse.Unmarshal(m, b)
-}
-func (m *InspectResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_InspectResponse.Marshal(b, m, deterministic)
-}
-func (dst *InspectResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InspectResponse.Merge(dst, src)
-}
-func (m *InspectResponse) XXX_Size() int {
-	return xxx_messageInfo_InspectResponse.Size(m)
-}
-func (m *InspectResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_InspectResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_InspectResponse proto.InternalMessageInfo
+func (m *InspectResponse) Reset()                    { *m = InspectResponse{} }
+func (m *InspectResponse) String() string            { return proto.CompactTextString(m) }
+func (*InspectResponse) ProtoMessage()               {}
+func (*InspectResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{16} }
 
 func (m *InspectResponse) GetError() *Error {
 	if m != nil {
@@ -1015,66 +631,22 @@ func (m *InspectResponse) GetAttestation() *Attestation {
 }
 
 type ListLocationsParams struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ListLocationsParams) Reset()         { *m = ListLocationsParams{} }
-func (m *ListLocationsParams) String() string { return proto.CompactTextString(m) }
-func (*ListLocationsParams) ProtoMessage()    {}
-func (*ListLocationsParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{17}
-}
-func (m *ListLocationsParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ListLocationsParams.Unmarshal(m, b)
-}
-func (m *ListLocationsParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ListLocationsParams.Marshal(b, m, deterministic)
-}
-func (dst *ListLocationsParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ListLocationsParams.Merge(dst, src)
-}
-func (m *ListLocationsParams) XXX_Size() int {
-	return xxx_messageInfo_ListLocationsParams.Size(m)
-}
-func (m *ListLocationsParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_ListLocationsParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ListLocationsParams proto.InternalMessageInfo
+func (m *ListLocationsParams) Reset()                    { *m = ListLocationsParams{} }
+func (m *ListLocationsParams) String() string            { return proto.CompactTextString(m) }
+func (*ListLocationsParams) ProtoMessage()               {}
+func (*ListLocationsParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{17} }
 
 type ListLocationsResponse struct {
-	Error                *Error               `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	AgentLocations       map[string]*Location `protobuf:"bytes,2,rep,name=agentLocations,proto3" json:"agentLocations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	Error          *Error               `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	AgentLocations map[string]*Location `protobuf:"bytes,2,rep,name=agentLocations" json:"agentLocations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 }
 
-func (m *ListLocationsResponse) Reset()         { *m = ListLocationsResponse{} }
-func (m *ListLocationsResponse) String() string { return proto.CompactTextString(m) }
-func (*ListLocationsResponse) ProtoMessage()    {}
-func (*ListLocationsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{18}
-}
-func (m *ListLocationsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ListLocationsResponse.Unmarshal(m, b)
-}
-func (m *ListLocationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ListLocationsResponse.Marshal(b, m, deterministic)
-}
-func (dst *ListLocationsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ListLocationsResponse.Merge(dst, src)
-}
-func (m *ListLocationsResponse) XXX_Size() int {
-	return xxx_messageInfo_ListLocationsResponse.Size(m)
-}
-func (m *ListLocationsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ListLocationsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ListLocationsResponse proto.InternalMessageInfo
+func (m *ListLocationsResponse) Reset()                    { *m = ListLocationsResponse{} }
+func (m *ListLocationsResponse) String() string            { return proto.CompactTextString(m) }
+func (*ListLocationsResponse) ProtoMessage()               {}
+func (*ListLocationsResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{18} }
 
 func (m *ListLocationsResponse) GetError() *Error {
 	if m != nil {
@@ -1092,38 +664,16 @@ func (m *ListLocationsResponse) GetAgentLocations() map[string]*Location {
 
 type CreateEntityParams struct {
 	// Milliseconds since the epoch
-	ValidFrom            int64     `protobuf:"varint,1,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
-	ValidUntil           int64     `protobuf:"varint,2,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	RevocationLocation   *Location `protobuf:"bytes,3,opt,name=revocationLocation,proto3" json:"revocationLocation,omitempty"`
-	SecretPassphrase     string    `protobuf:"bytes,4,opt,name=SecretPassphrase,proto3" json:"SecretPassphrase,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	ValidFrom          int64     `protobuf:"varint,1,opt,name=validFrom" json:"validFrom,omitempty"`
+	ValidUntil         int64     `protobuf:"varint,2,opt,name=validUntil" json:"validUntil,omitempty"`
+	RevocationLocation *Location `protobuf:"bytes,3,opt,name=revocationLocation" json:"revocationLocation,omitempty"`
+	SecretPassphrase   string    `protobuf:"bytes,4,opt,name=SecretPassphrase" json:"SecretPassphrase,omitempty"`
 }
 
-func (m *CreateEntityParams) Reset()         { *m = CreateEntityParams{} }
-func (m *CreateEntityParams) String() string { return proto.CompactTextString(m) }
-func (*CreateEntityParams) ProtoMessage()    {}
-func (*CreateEntityParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{19}
-}
-func (m *CreateEntityParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateEntityParams.Unmarshal(m, b)
-}
-func (m *CreateEntityParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateEntityParams.Marshal(b, m, deterministic)
-}
-func (dst *CreateEntityParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateEntityParams.Merge(dst, src)
-}
-func (m *CreateEntityParams) XXX_Size() int {
-	return xxx_messageInfo_CreateEntityParams.Size(m)
-}
-func (m *CreateEntityParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateEntityParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateEntityParams proto.InternalMessageInfo
+func (m *CreateEntityParams) Reset()                    { *m = CreateEntityParams{} }
+func (m *CreateEntityParams) String() string            { return proto.CompactTextString(m) }
+func (*CreateEntityParams) ProtoMessage()               {}
+func (*CreateEntityParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{19} }
 
 func (m *CreateEntityParams) GetValidFrom() int64 {
 	if m != nil {
@@ -1154,38 +704,16 @@ func (m *CreateEntityParams) GetSecretPassphrase() string {
 }
 
 type CreateEntityResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	PublicDER            []byte   `protobuf:"bytes,2,opt,name=PublicDER,proto3" json:"PublicDER,omitempty"`
-	SecretDER            []byte   `protobuf:"bytes,3,opt,name=SecretDER,proto3" json:"SecretDER,omitempty"`
-	Hash                 []byte   `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error     *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	PublicDER []byte `protobuf:"bytes,2,opt,name=PublicDER,proto3" json:"PublicDER,omitempty"`
+	SecretDER []byte `protobuf:"bytes,3,opt,name=SecretDER,proto3" json:"SecretDER,omitempty"`
+	Hash      []byte `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *CreateEntityResponse) Reset()         { *m = CreateEntityResponse{} }
-func (m *CreateEntityResponse) String() string { return proto.CompactTextString(m) }
-func (*CreateEntityResponse) ProtoMessage()    {}
-func (*CreateEntityResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{20}
-}
-func (m *CreateEntityResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateEntityResponse.Unmarshal(m, b)
-}
-func (m *CreateEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateEntityResponse.Marshal(b, m, deterministic)
-}
-func (dst *CreateEntityResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateEntityResponse.Merge(dst, src)
-}
-func (m *CreateEntityResponse) XXX_Size() int {
-	return xxx_messageInfo_CreateEntityResponse.Size(m)
-}
-func (m *CreateEntityResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateEntityResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateEntityResponse proto.InternalMessageInfo
+func (m *CreateEntityResponse) Reset()                    { *m = CreateEntityResponse{} }
+func (m *CreateEntityResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateEntityResponse) ProtoMessage()               {}
+func (*CreateEntityResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{20} }
 
 func (m *CreateEntityResponse) GetError() *Error {
 	if m != nil {
@@ -1216,38 +744,16 @@ func (m *CreateEntityResponse) GetHash() []byte {
 }
 
 type Entity struct {
-	Hash                 []byte          `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	ValidFrom            int64           `protobuf:"varint,2,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
-	ValidUntil           int64           `protobuf:"varint,3,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	Validity             *EntityValidity `protobuf:"bytes,4,opt,name=validity,proto3" json:"validity,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
+	Hash       []byte          `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	ValidFrom  int64           `protobuf:"varint,2,opt,name=validFrom" json:"validFrom,omitempty"`
+	ValidUntil int64           `protobuf:"varint,3,opt,name=validUntil" json:"validUntil,omitempty"`
+	Validity   *EntityValidity `protobuf:"bytes,4,opt,name=validity" json:"validity,omitempty"`
 }
 
-func (m *Entity) Reset()         { *m = Entity{} }
-func (m *Entity) String() string { return proto.CompactTextString(m) }
-func (*Entity) ProtoMessage()    {}
-func (*Entity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{21}
-}
-func (m *Entity) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Entity.Unmarshal(m, b)
-}
-func (m *Entity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Entity.Marshal(b, m, deterministic)
-}
-func (dst *Entity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Entity.Merge(dst, src)
-}
-func (m *Entity) XXX_Size() int {
-	return xxx_messageInfo_Entity.Size(m)
-}
-func (m *Entity) XXX_DiscardUnknown() {
-	xxx_messageInfo_Entity.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Entity proto.InternalMessageInfo
+func (m *Entity) Reset()                    { *m = Entity{} }
+func (m *Entity) String() string            { return proto.CompactTextString(m) }
+func (*Entity) ProtoMessage()               {}
+func (*Entity) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{21} }
 
 func (m *Entity) GetHash() []byte {
 	if m != nil {
@@ -1278,45 +784,23 @@ func (m *Entity) GetValidity() *EntityValidity {
 }
 
 type CreateAttestationParams struct {
-	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
 	// If omitted will default to wr1
-	BodyScheme      string    `protobuf:"bytes,2,opt,name=bodyScheme,proto3" json:"bodyScheme,omitempty"`
+	BodyScheme      string    `protobuf:"bytes,2,opt,name=bodyScheme" json:"bodyScheme,omitempty"`
 	SubjectHash     []byte    `protobuf:"bytes,3,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
-	SubjectLocation *Location `protobuf:"bytes,4,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
+	SubjectLocation *Location `protobuf:"bytes,4,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
 	// If 0, will be set to time.Now. Ms since epoch
-	ValidFrom int64 `protobuf:"varint,5,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
+	ValidFrom int64 `protobuf:"varint,5,opt,name=validFrom" json:"validFrom,omitempty"`
 	// If 0, will be set to some arbitrary default. Ms since epoch
-	ValidUntil           int64    `protobuf:"varint,6,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	Policy               *Policy  `protobuf:"bytes,7,opt,name=policy,proto3" json:"policy,omitempty"`
-	Publish              bool     `protobuf:"varint,8,opt,name=publish,proto3" json:"publish,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ValidUntil int64   `protobuf:"varint,6,opt,name=validUntil" json:"validUntil,omitempty"`
+	Policy     *Policy `protobuf:"bytes,7,opt,name=policy" json:"policy,omitempty"`
+	Publish    bool    `protobuf:"varint,8,opt,name=publish" json:"publish,omitempty"`
 }
 
-func (m *CreateAttestationParams) Reset()         { *m = CreateAttestationParams{} }
-func (m *CreateAttestationParams) String() string { return proto.CompactTextString(m) }
-func (*CreateAttestationParams) ProtoMessage()    {}
-func (*CreateAttestationParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{22}
-}
-func (m *CreateAttestationParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateAttestationParams.Unmarshal(m, b)
-}
-func (m *CreateAttestationParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateAttestationParams.Marshal(b, m, deterministic)
-}
-func (dst *CreateAttestationParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateAttestationParams.Merge(dst, src)
-}
-func (m *CreateAttestationParams) XXX_Size() int {
-	return xxx_messageInfo_CreateAttestationParams.Size(m)
-}
-func (m *CreateAttestationParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateAttestationParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateAttestationParams proto.InternalMessageInfo
+func (m *CreateAttestationParams) Reset()                    { *m = CreateAttestationParams{} }
+func (m *CreateAttestationParams) String() string            { return proto.CompactTextString(m) }
+func (*CreateAttestationParams) ProtoMessage()               {}
+func (*CreateAttestationParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{22} }
 
 func (m *CreateAttestationParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -1375,35 +859,13 @@ func (m *CreateAttestationParams) GetPublish() bool {
 }
 
 type ResyncPerspectiveGraphParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
 }
 
-func (m *ResyncPerspectiveGraphParams) Reset()         { *m = ResyncPerspectiveGraphParams{} }
-func (m *ResyncPerspectiveGraphParams) String() string { return proto.CompactTextString(m) }
-func (*ResyncPerspectiveGraphParams) ProtoMessage()    {}
-func (*ResyncPerspectiveGraphParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{23}
-}
-func (m *ResyncPerspectiveGraphParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResyncPerspectiveGraphParams.Unmarshal(m, b)
-}
-func (m *ResyncPerspectiveGraphParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResyncPerspectiveGraphParams.Marshal(b, m, deterministic)
-}
-func (dst *ResyncPerspectiveGraphParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResyncPerspectiveGraphParams.Merge(dst, src)
-}
-func (m *ResyncPerspectiveGraphParams) XXX_Size() int {
-	return xxx_messageInfo_ResyncPerspectiveGraphParams.Size(m)
-}
-func (m *ResyncPerspectiveGraphParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResyncPerspectiveGraphParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResyncPerspectiveGraphParams proto.InternalMessageInfo
+func (m *ResyncPerspectiveGraphParams) Reset()                    { *m = ResyncPerspectiveGraphParams{} }
+func (m *ResyncPerspectiveGraphParams) String() string            { return proto.CompactTextString(m) }
+func (*ResyncPerspectiveGraphParams) ProtoMessage()               {}
+func (*ResyncPerspectiveGraphParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{23} }
 
 func (m *ResyncPerspectiveGraphParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -1413,35 +875,13 @@ func (m *ResyncPerspectiveGraphParams) GetPerspective() *Perspective {
 }
 
 type ResyncPerspectiveGraphResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
 }
 
-func (m *ResyncPerspectiveGraphResponse) Reset()         { *m = ResyncPerspectiveGraphResponse{} }
-func (m *ResyncPerspectiveGraphResponse) String() string { return proto.CompactTextString(m) }
-func (*ResyncPerspectiveGraphResponse) ProtoMessage()    {}
-func (*ResyncPerspectiveGraphResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{24}
-}
-func (m *ResyncPerspectiveGraphResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ResyncPerspectiveGraphResponse.Unmarshal(m, b)
-}
-func (m *ResyncPerspectiveGraphResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ResyncPerspectiveGraphResponse.Marshal(b, m, deterministic)
-}
-func (dst *ResyncPerspectiveGraphResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResyncPerspectiveGraphResponse.Merge(dst, src)
-}
-func (m *ResyncPerspectiveGraphResponse) XXX_Size() int {
-	return xxx_messageInfo_ResyncPerspectiveGraphResponse.Size(m)
-}
-func (m *ResyncPerspectiveGraphResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResyncPerspectiveGraphResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResyncPerspectiveGraphResponse proto.InternalMessageInfo
+func (m *ResyncPerspectiveGraphResponse) Reset()                    { *m = ResyncPerspectiveGraphResponse{} }
+func (m *ResyncPerspectiveGraphResponse) String() string            { return proto.CompactTextString(m) }
+func (*ResyncPerspectiveGraphResponse) ProtoMessage()               {}
+func (*ResyncPerspectiveGraphResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{24} }
 
 func (m *ResyncPerspectiveGraphResponse) GetError() *Error {
 	if m != nil {
@@ -1451,35 +891,13 @@ func (m *ResyncPerspectiveGraphResponse) GetError() *Error {
 }
 
 type SyncParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
 }
 
-func (m *SyncParams) Reset()         { *m = SyncParams{} }
-func (m *SyncParams) String() string { return proto.CompactTextString(m) }
-func (*SyncParams) ProtoMessage()    {}
-func (*SyncParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{25}
-}
-func (m *SyncParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SyncParams.Unmarshal(m, b)
-}
-func (m *SyncParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SyncParams.Marshal(b, m, deterministic)
-}
-func (dst *SyncParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SyncParams.Merge(dst, src)
-}
-func (m *SyncParams) XXX_Size() int {
-	return xxx_messageInfo_SyncParams.Size(m)
-}
-func (m *SyncParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_SyncParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SyncParams proto.InternalMessageInfo
+func (m *SyncParams) Reset()                    { *m = SyncParams{} }
+func (m *SyncParams) String() string            { return proto.CompactTextString(m) }
+func (*SyncParams) ProtoMessage()               {}
+func (*SyncParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{25} }
 
 func (m *SyncParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -1489,48 +907,26 @@ func (m *SyncParams) GetPerspective() *Perspective {
 }
 
 type EncryptMessageParams struct {
-	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
 	// The payload of the message
 	Content []byte `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// If present, a direct decryption key will be generated
 	SubjectHash     []byte    `protobuf:"bytes,3,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
-	SubjectLocation *Location `protobuf:"bytes,4,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
+	SubjectLocation *Location `protobuf:"bytes,4,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
 	// If present, an OAQUE decryption key will be generated
 	Namespace         []byte    `protobuf:"bytes,5,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	NamespaceLocation *Location `protobuf:"bytes,6,opt,name=namespaceLocation,proto3" json:"namespaceLocation,omitempty"`
-	Resource          string    `protobuf:"bytes,7,opt,name=resource,proto3" json:"resource,omitempty"`
+	NamespaceLocation *Location `protobuf:"bytes,6,opt,name=namespaceLocation" json:"namespaceLocation,omitempty"`
+	Resource          string    `protobuf:"bytes,7,opt,name=resource" json:"resource,omitempty"`
 	// ms since epoch, if zero set to now
-	ValidFrom int64 `protobuf:"varint,8,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
+	ValidFrom int64 `protobuf:"varint,8,opt,name=validFrom" json:"validFrom,omitempty"`
 	// ms since epoch, if zero set to now
-	ValidUntil           int64    `protobuf:"varint,9,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ValidUntil int64 `protobuf:"varint,9,opt,name=validUntil" json:"validUntil,omitempty"`
 }
 
-func (m *EncryptMessageParams) Reset()         { *m = EncryptMessageParams{} }
-func (m *EncryptMessageParams) String() string { return proto.CompactTextString(m) }
-func (*EncryptMessageParams) ProtoMessage()    {}
-func (*EncryptMessageParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{26}
-}
-func (m *EncryptMessageParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EncryptMessageParams.Unmarshal(m, b)
-}
-func (m *EncryptMessageParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EncryptMessageParams.Marshal(b, m, deterministic)
-}
-func (dst *EncryptMessageParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptMessageParams.Merge(dst, src)
-}
-func (m *EncryptMessageParams) XXX_Size() int {
-	return xxx_messageInfo_EncryptMessageParams.Size(m)
-}
-func (m *EncryptMessageParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_EncryptMessageParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EncryptMessageParams proto.InternalMessageInfo
+func (m *EncryptMessageParams) Reset()                    { *m = EncryptMessageParams{} }
+func (m *EncryptMessageParams) String() string            { return proto.CompactTextString(m) }
+func (*EncryptMessageParams) ProtoMessage()               {}
+func (*EncryptMessageParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{26} }
 
 func (m *EncryptMessageParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -1596,36 +992,14 @@ func (m *EncryptMessageParams) GetValidUntil() int64 {
 }
 
 type EncryptMessageResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Ciphertext           []byte   `protobuf:"bytes,2,opt,name=ciphertext,proto3" json:"ciphertext,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error      *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Ciphertext []byte `protobuf:"bytes,2,opt,name=ciphertext,proto3" json:"ciphertext,omitempty"`
 }
 
-func (m *EncryptMessageResponse) Reset()         { *m = EncryptMessageResponse{} }
-func (m *EncryptMessageResponse) String() string { return proto.CompactTextString(m) }
-func (*EncryptMessageResponse) ProtoMessage()    {}
-func (*EncryptMessageResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{27}
-}
-func (m *EncryptMessageResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EncryptMessageResponse.Unmarshal(m, b)
-}
-func (m *EncryptMessageResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EncryptMessageResponse.Marshal(b, m, deterministic)
-}
-func (dst *EncryptMessageResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptMessageResponse.Merge(dst, src)
-}
-func (m *EncryptMessageResponse) XXX_Size() int {
-	return xxx_messageInfo_EncryptMessageResponse.Size(m)
-}
-func (m *EncryptMessageResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_EncryptMessageResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EncryptMessageResponse proto.InternalMessageInfo
+func (m *EncryptMessageResponse) Reset()                    { *m = EncryptMessageResponse{} }
+func (m *EncryptMessageResponse) String() string            { return proto.CompactTextString(m) }
+func (*EncryptMessageResponse) ProtoMessage()               {}
+func (*EncryptMessageResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{27} }
 
 func (m *EncryptMessageResponse) GetError() *Error {
 	if m != nil {
@@ -1642,36 +1016,14 @@ func (m *EncryptMessageResponse) GetCiphertext() []byte {
 }
 
 type DecryptMessageParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	Ciphertext           []byte       `protobuf:"bytes,2,opt,name=ciphertext,proto3" json:"ciphertext,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	Ciphertext  []byte       `protobuf:"bytes,2,opt,name=ciphertext,proto3" json:"ciphertext,omitempty"`
 }
 
-func (m *DecryptMessageParams) Reset()         { *m = DecryptMessageParams{} }
-func (m *DecryptMessageParams) String() string { return proto.CompactTextString(m) }
-func (*DecryptMessageParams) ProtoMessage()    {}
-func (*DecryptMessageParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{28}
-}
-func (m *DecryptMessageParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DecryptMessageParams.Unmarshal(m, b)
-}
-func (m *DecryptMessageParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DecryptMessageParams.Marshal(b, m, deterministic)
-}
-func (dst *DecryptMessageParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DecryptMessageParams.Merge(dst, src)
-}
-func (m *DecryptMessageParams) XXX_Size() int {
-	return xxx_messageInfo_DecryptMessageParams.Size(m)
-}
-func (m *DecryptMessageParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_DecryptMessageParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DecryptMessageParams proto.InternalMessageInfo
+func (m *DecryptMessageParams) Reset()                    { *m = DecryptMessageParams{} }
+func (m *DecryptMessageParams) String() string            { return proto.CompactTextString(m) }
+func (*DecryptMessageParams) ProtoMessage()               {}
+func (*DecryptMessageParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{28} }
 
 func (m *DecryptMessageParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -1688,36 +1040,14 @@ func (m *DecryptMessageParams) GetCiphertext() []byte {
 }
 
 type DecryptMessageResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Content              []byte   `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error   *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Content []byte `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 }
 
-func (m *DecryptMessageResponse) Reset()         { *m = DecryptMessageResponse{} }
-func (m *DecryptMessageResponse) String() string { return proto.CompactTextString(m) }
-func (*DecryptMessageResponse) ProtoMessage()    {}
-func (*DecryptMessageResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{29}
-}
-func (m *DecryptMessageResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DecryptMessageResponse.Unmarshal(m, b)
-}
-func (m *DecryptMessageResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DecryptMessageResponse.Marshal(b, m, deterministic)
-}
-func (dst *DecryptMessageResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DecryptMessageResponse.Merge(dst, src)
-}
-func (m *DecryptMessageResponse) XXX_Size() int {
-	return xxx_messageInfo_DecryptMessageResponse.Size(m)
-}
-func (m *DecryptMessageResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_DecryptMessageResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DecryptMessageResponse proto.InternalMessageInfo
+func (m *DecryptMessageResponse) Reset()                    { *m = DecryptMessageResponse{} }
+func (m *DecryptMessageResponse) String() string            { return proto.CompactTextString(m) }
+func (*DecryptMessageResponse) ProtoMessage()               {}
+func (*DecryptMessageResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{29} }
 
 func (m *DecryptMessageResponse) GetError() *Error {
 	if m != nil {
@@ -1734,38 +1064,16 @@ func (m *DecryptMessageResponse) GetContent() []byte {
 }
 
 type SyncResponse struct {
-	Error                *Error                          `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	StorageStatus        map[string]*StorageDriverStatus `protobuf:"bytes,2,rep,name=storageStatus,proto3" json:"storageStatus,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	TotalSyncRequests    int64                           `protobuf:"varint,3,opt,name=totalSyncRequests,proto3" json:"totalSyncRequests,omitempty"`
-	CompletedSyncs       int64                           `protobuf:"varint,4,opt,name=completedSyncs,proto3" json:"completedSyncs,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
-	XXX_unrecognized     []byte                          `json:"-"`
-	XXX_sizecache        int32                           `json:"-"`
+	Error             *Error                          `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	StorageStatus     map[string]*StorageDriverStatus `protobuf:"bytes,2,rep,name=storageStatus" json:"storageStatus,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	TotalSyncRequests int64                           `protobuf:"varint,3,opt,name=totalSyncRequests" json:"totalSyncRequests,omitempty"`
+	CompletedSyncs    int64                           `protobuf:"varint,4,opt,name=completedSyncs" json:"completedSyncs,omitempty"`
 }
 
-func (m *SyncResponse) Reset()         { *m = SyncResponse{} }
-func (m *SyncResponse) String() string { return proto.CompactTextString(m) }
-func (*SyncResponse) ProtoMessage()    {}
-func (*SyncResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{30}
-}
-func (m *SyncResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SyncResponse.Unmarshal(m, b)
-}
-func (m *SyncResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SyncResponse.Marshal(b, m, deterministic)
-}
-func (dst *SyncResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SyncResponse.Merge(dst, src)
-}
-func (m *SyncResponse) XXX_Size() int {
-	return xxx_messageInfo_SyncResponse.Size(m)
-}
-func (m *SyncResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_SyncResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SyncResponse proto.InternalMessageInfo
+func (m *SyncResponse) Reset()                    { *m = SyncResponse{} }
+func (m *SyncResponse) String() string            { return proto.CompactTextString(m) }
+func (*SyncResponse) ProtoMessage()               {}
+func (*SyncResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{30} }
 
 func (m *SyncResponse) GetError() *Error {
 	if m != nil {
@@ -1796,36 +1104,14 @@ func (m *SyncResponse) GetCompletedSyncs() int64 {
 }
 
 type StorageDriverStatus struct {
-	Operational          bool              `protobuf:"varint,1,opt,name=operational,proto3" json:"operational,omitempty"`
-	Info                 map[string]string `protobuf:"bytes,2,rep,name=info,proto3" json:"info,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Operational bool              `protobuf:"varint,1,opt,name=operational" json:"operational,omitempty"`
+	Info        map[string]string `protobuf:"bytes,2,rep,name=info" json:"info,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 }
 
-func (m *StorageDriverStatus) Reset()         { *m = StorageDriverStatus{} }
-func (m *StorageDriverStatus) String() string { return proto.CompactTextString(m) }
-func (*StorageDriverStatus) ProtoMessage()    {}
-func (*StorageDriverStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{31}
-}
-func (m *StorageDriverStatus) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StorageDriverStatus.Unmarshal(m, b)
-}
-func (m *StorageDriverStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StorageDriverStatus.Marshal(b, m, deterministic)
-}
-func (dst *StorageDriverStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StorageDriverStatus.Merge(dst, src)
-}
-func (m *StorageDriverStatus) XXX_Size() int {
-	return xxx_messageInfo_StorageDriverStatus.Size(m)
-}
-func (m *StorageDriverStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_StorageDriverStatus.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StorageDriverStatus proto.InternalMessageInfo
+func (m *StorageDriverStatus) Reset()                    { *m = StorageDriverStatus{} }
+func (m *StorageDriverStatus) String() string            { return proto.CompactTextString(m) }
+func (*StorageDriverStatus) ProtoMessage()               {}
+func (*StorageDriverStatus) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{31} }
 
 func (m *StorageDriverStatus) GetOperational() bool {
 	if m != nil {
@@ -1842,39 +1128,17 @@ func (m *StorageDriverStatus) GetInfo() map[string]string {
 }
 
 type CreateAttestationResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	DER                  []byte   `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
-	VerifierKey          []byte   `protobuf:"bytes,3,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
-	ProverKey            []byte   `protobuf:"bytes,4,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
-	Hash                 []byte   `protobuf:"bytes,5,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error       *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	DER         []byte `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
+	VerifierKey []byte `protobuf:"bytes,3,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
+	ProverKey   []byte `protobuf:"bytes,4,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
+	Hash        []byte `protobuf:"bytes,5,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *CreateAttestationResponse) Reset()         { *m = CreateAttestationResponse{} }
-func (m *CreateAttestationResponse) String() string { return proto.CompactTextString(m) }
-func (*CreateAttestationResponse) ProtoMessage()    {}
-func (*CreateAttestationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{32}
-}
-func (m *CreateAttestationResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateAttestationResponse.Unmarshal(m, b)
-}
-func (m *CreateAttestationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateAttestationResponse.Marshal(b, m, deterministic)
-}
-func (dst *CreateAttestationResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateAttestationResponse.Merge(dst, src)
-}
-func (m *CreateAttestationResponse) XXX_Size() int {
-	return xxx_messageInfo_CreateAttestationResponse.Size(m)
-}
-func (m *CreateAttestationResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateAttestationResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateAttestationResponse proto.InternalMessageInfo
+func (m *CreateAttestationResponse) Reset()                    { *m = CreateAttestationResponse{} }
+func (m *CreateAttestationResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateAttestationResponse) ProtoMessage()               {}
+func (*CreateAttestationResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{32} }
 
 func (m *CreateAttestationResponse) GetError() *Error {
 	if m != nil {
@@ -1912,36 +1176,14 @@ func (m *CreateAttestationResponse) GetHash() []byte {
 }
 
 type PublishEntityParams struct {
-	DER                  []byte    `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
-	Location             *Location `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	DER      []byte    `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
+	Location *Location `protobuf:"bytes,2,opt,name=location" json:"location,omitempty"`
 }
 
-func (m *PublishEntityParams) Reset()         { *m = PublishEntityParams{} }
-func (m *PublishEntityParams) String() string { return proto.CompactTextString(m) }
-func (*PublishEntityParams) ProtoMessage()    {}
-func (*PublishEntityParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{33}
-}
-func (m *PublishEntityParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PublishEntityParams.Unmarshal(m, b)
-}
-func (m *PublishEntityParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PublishEntityParams.Marshal(b, m, deterministic)
-}
-func (dst *PublishEntityParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublishEntityParams.Merge(dst, src)
-}
-func (m *PublishEntityParams) XXX_Size() int {
-	return xxx_messageInfo_PublishEntityParams.Size(m)
-}
-func (m *PublishEntityParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_PublishEntityParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PublishEntityParams proto.InternalMessageInfo
+func (m *PublishEntityParams) Reset()                    { *m = PublishEntityParams{} }
+func (m *PublishEntityParams) String() string            { return proto.CompactTextString(m) }
+func (*PublishEntityParams) ProtoMessage()               {}
+func (*PublishEntityParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{33} }
 
 func (m *PublishEntityParams) GetDER() []byte {
 	if m != nil {
@@ -1958,36 +1200,14 @@ func (m *PublishEntityParams) GetLocation() *Location {
 }
 
 type PublishEntityResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Hash                 []byte   `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Hash  []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *PublishEntityResponse) Reset()         { *m = PublishEntityResponse{} }
-func (m *PublishEntityResponse) String() string { return proto.CompactTextString(m) }
-func (*PublishEntityResponse) ProtoMessage()    {}
-func (*PublishEntityResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{34}
-}
-func (m *PublishEntityResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PublishEntityResponse.Unmarshal(m, b)
-}
-func (m *PublishEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PublishEntityResponse.Marshal(b, m, deterministic)
-}
-func (dst *PublishEntityResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublishEntityResponse.Merge(dst, src)
-}
-func (m *PublishEntityResponse) XXX_Size() int {
-	return xxx_messageInfo_PublishEntityResponse.Size(m)
-}
-func (m *PublishEntityResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PublishEntityResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PublishEntityResponse proto.InternalMessageInfo
+func (m *PublishEntityResponse) Reset()                    { *m = PublishEntityResponse{} }
+func (m *PublishEntityResponse) String() string            { return proto.CompactTextString(m) }
+func (*PublishEntityResponse) ProtoMessage()               {}
+func (*PublishEntityResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{34} }
 
 func (m *PublishEntityResponse) GetError() *Error {
 	if m != nil {
@@ -2004,35 +1224,13 @@ func (m *PublishEntityResponse) GetHash() []byte {
 }
 
 type PublishAttestationParams struct {
-	DER                  []byte   `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	DER []byte `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
 }
 
-func (m *PublishAttestationParams) Reset()         { *m = PublishAttestationParams{} }
-func (m *PublishAttestationParams) String() string { return proto.CompactTextString(m) }
-func (*PublishAttestationParams) ProtoMessage()    {}
-func (*PublishAttestationParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{35}
-}
-func (m *PublishAttestationParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PublishAttestationParams.Unmarshal(m, b)
-}
-func (m *PublishAttestationParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PublishAttestationParams.Marshal(b, m, deterministic)
-}
-func (dst *PublishAttestationParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublishAttestationParams.Merge(dst, src)
-}
-func (m *PublishAttestationParams) XXX_Size() int {
-	return xxx_messageInfo_PublishAttestationParams.Size(m)
-}
-func (m *PublishAttestationParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_PublishAttestationParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PublishAttestationParams proto.InternalMessageInfo
+func (m *PublishAttestationParams) Reset()                    { *m = PublishAttestationParams{} }
+func (m *PublishAttestationParams) String() string            { return proto.CompactTextString(m) }
+func (*PublishAttestationParams) ProtoMessage()               {}
+func (*PublishAttestationParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{35} }
 
 func (m *PublishAttestationParams) GetDER() []byte {
 	if m != nil {
@@ -2042,36 +1240,14 @@ func (m *PublishAttestationParams) GetDER() []byte {
 }
 
 type PublishAttestationResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Hash                 []byte   `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Hash  []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *PublishAttestationResponse) Reset()         { *m = PublishAttestationResponse{} }
-func (m *PublishAttestationResponse) String() string { return proto.CompactTextString(m) }
-func (*PublishAttestationResponse) ProtoMessage()    {}
-func (*PublishAttestationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{36}
-}
-func (m *PublishAttestationResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PublishAttestationResponse.Unmarshal(m, b)
-}
-func (m *PublishAttestationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PublishAttestationResponse.Marshal(b, m, deterministic)
-}
-func (dst *PublishAttestationResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublishAttestationResponse.Merge(dst, src)
-}
-func (m *PublishAttestationResponse) XXX_Size() int {
-	return xxx_messageInfo_PublishAttestationResponse.Size(m)
-}
-func (m *PublishAttestationResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PublishAttestationResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PublishAttestationResponse proto.InternalMessageInfo
+func (m *PublishAttestationResponse) Reset()                    { *m = PublishAttestationResponse{} }
+func (m *PublishAttestationResponse) String() string            { return proto.CompactTextString(m) }
+func (*PublishAttestationResponse) ProtoMessage()               {}
+func (*PublishAttestationResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{36} }
 
 func (m *PublishAttestationResponse) GetError() *Error {
 	if m != nil {
@@ -2088,37 +1264,15 @@ func (m *PublishAttestationResponse) GetHash() []byte {
 }
 
 type AddAttestationParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	DER                  []byte       `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
-	ProverKey            []byte       `protobuf:"bytes,3,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	DER         []byte       `protobuf:"bytes,2,opt,name=DER,proto3" json:"DER,omitempty"`
+	ProverKey   []byte       `protobuf:"bytes,3,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
 }
 
-func (m *AddAttestationParams) Reset()         { *m = AddAttestationParams{} }
-func (m *AddAttestationParams) String() string { return proto.CompactTextString(m) }
-func (*AddAttestationParams) ProtoMessage()    {}
-func (*AddAttestationParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{37}
-}
-func (m *AddAttestationParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AddAttestationParams.Unmarshal(m, b)
-}
-func (m *AddAttestationParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AddAttestationParams.Marshal(b, m, deterministic)
-}
-func (dst *AddAttestationParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddAttestationParams.Merge(dst, src)
-}
-func (m *AddAttestationParams) XXX_Size() int {
-	return xxx_messageInfo_AddAttestationParams.Size(m)
-}
-func (m *AddAttestationParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddAttestationParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AddAttestationParams proto.InternalMessageInfo
+func (m *AddAttestationParams) Reset()                    { *m = AddAttestationParams{} }
+func (m *AddAttestationParams) String() string            { return proto.CompactTextString(m) }
+func (*AddAttestationParams) ProtoMessage()               {}
+func (*AddAttestationParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{37} }
 
 func (m *AddAttestationParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -2142,35 +1296,13 @@ func (m *AddAttestationParams) GetProverKey() []byte {
 }
 
 type AddAttestationResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
 }
 
-func (m *AddAttestationResponse) Reset()         { *m = AddAttestationResponse{} }
-func (m *AddAttestationResponse) String() string { return proto.CompactTextString(m) }
-func (*AddAttestationResponse) ProtoMessage()    {}
-func (*AddAttestationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{38}
-}
-func (m *AddAttestationResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AddAttestationResponse.Unmarshal(m, b)
-}
-func (m *AddAttestationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AddAttestationResponse.Marshal(b, m, deterministic)
-}
-func (dst *AddAttestationResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddAttestationResponse.Merge(dst, src)
-}
-func (m *AddAttestationResponse) XXX_Size() int {
-	return xxx_messageInfo_AddAttestationResponse.Size(m)
-}
-func (m *AddAttestationResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddAttestationResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AddAttestationResponse proto.InternalMessageInfo
+func (m *AddAttestationResponse) Reset()                    { *m = AddAttestationResponse{} }
+func (m *AddAttestationResponse) String() string            { return proto.CompactTextString(m) }
+func (*AddAttestationResponse) ProtoMessage()               {}
+func (*AddAttestationResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{38} }
 
 func (m *AddAttestationResponse) GetError() *Error {
 	if m != nil {
@@ -2180,37 +1312,15 @@ func (m *AddAttestationResponse) GetError() *Error {
 }
 
 type LookupAttestationsParams struct {
-	Perspective          *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
-	FromEntity           []byte       `protobuf:"bytes,2,opt,name=fromEntity,proto3" json:"fromEntity,omitempty"`
-	ToEntity             []byte       `protobuf:"bytes,3,opt,name=toEntity,proto3" json:"toEntity,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
+	FromEntity  []byte       `protobuf:"bytes,2,opt,name=fromEntity,proto3" json:"fromEntity,omitempty"`
+	ToEntity    []byte       `protobuf:"bytes,3,opt,name=toEntity,proto3" json:"toEntity,omitempty"`
 }
 
-func (m *LookupAttestationsParams) Reset()         { *m = LookupAttestationsParams{} }
-func (m *LookupAttestationsParams) String() string { return proto.CompactTextString(m) }
-func (*LookupAttestationsParams) ProtoMessage()    {}
-func (*LookupAttestationsParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{39}
-}
-func (m *LookupAttestationsParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LookupAttestationsParams.Unmarshal(m, b)
-}
-func (m *LookupAttestationsParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LookupAttestationsParams.Marshal(b, m, deterministic)
-}
-func (dst *LookupAttestationsParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LookupAttestationsParams.Merge(dst, src)
-}
-func (m *LookupAttestationsParams) XXX_Size() int {
-	return xxx_messageInfo_LookupAttestationsParams.Size(m)
-}
-func (m *LookupAttestationsParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_LookupAttestationsParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LookupAttestationsParams proto.InternalMessageInfo
+func (m *LookupAttestationsParams) Reset()                    { *m = LookupAttestationsParams{} }
+func (m *LookupAttestationsParams) String() string            { return proto.CompactTextString(m) }
+func (*LookupAttestationsParams) ProtoMessage()               {}
+func (*LookupAttestationsParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{39} }
 
 func (m *LookupAttestationsParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -2234,36 +1344,14 @@ func (m *LookupAttestationsParams) GetToEntity() []byte {
 }
 
 type LookupAttestationsResponse struct {
-	Error                *Error         `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Results              []*Attestation `protobuf:"bytes,2,rep,name=results,proto3" json:"results,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	Error   *Error         `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Results []*Attestation `protobuf:"bytes,2,rep,name=results" json:"results,omitempty"`
 }
 
-func (m *LookupAttestationsResponse) Reset()         { *m = LookupAttestationsResponse{} }
-func (m *LookupAttestationsResponse) String() string { return proto.CompactTextString(m) }
-func (*LookupAttestationsResponse) ProtoMessage()    {}
-func (*LookupAttestationsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{40}
-}
-func (m *LookupAttestationsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LookupAttestationsResponse.Unmarshal(m, b)
-}
-func (m *LookupAttestationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LookupAttestationsResponse.Marshal(b, m, deterministic)
-}
-func (dst *LookupAttestationsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LookupAttestationsResponse.Merge(dst, src)
-}
-func (m *LookupAttestationsResponse) XXX_Size() int {
-	return xxx_messageInfo_LookupAttestationsResponse.Size(m)
-}
-func (m *LookupAttestationsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_LookupAttestationsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LookupAttestationsResponse proto.InternalMessageInfo
+func (m *LookupAttestationsResponse) Reset()                    { *m = LookupAttestationsResponse{} }
+func (m *LookupAttestationsResponse) String() string            { return proto.CompactTextString(m) }
+func (*LookupAttestationsResponse) ProtoMessage()               {}
+func (*LookupAttestationsResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{40} }
 
 func (m *LookupAttestationsResponse) GetError() *Error {
 	if m != nil {
@@ -2280,36 +1368,14 @@ func (m *LookupAttestationsResponse) GetResults() []*Attestation {
 }
 
 type Error struct {
-	Code                 int32    `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Message              string   `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Code    int32  `protobuf:"varint,1,opt,name=code" json:"code,omitempty"`
+	Message string `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
 }
 
-func (m *Error) Reset()         { *m = Error{} }
-func (m *Error) String() string { return proto.CompactTextString(m) }
-func (*Error) ProtoMessage()    {}
-func (*Error) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{41}
-}
-func (m *Error) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Error.Unmarshal(m, b)
-}
-func (m *Error) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Error.Marshal(b, m, deterministic)
-}
-func (dst *Error) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Error.Merge(dst, src)
-}
-func (m *Error) XXX_Size() int {
-	return xxx_messageInfo_Error.Size(m)
-}
-func (m *Error) XXX_DiscardUnknown() {
-	xxx_messageInfo_Error.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Error proto.InternalMessageInfo
+func (m *Error) Reset()                    { *m = Error{} }
+func (m *Error) String() string            { return proto.CompactTextString(m) }
+func (*Error) ProtoMessage()               {}
+func (*Error) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{41} }
 
 func (m *Error) GetCode() int32 {
 	if m != nil {
@@ -2326,36 +1392,14 @@ func (m *Error) GetMessage() string {
 }
 
 type Perspective struct {
-	EntitySecret         *EntitySecret `protobuf:"bytes,1,opt,name=entitySecret,proto3" json:"entitySecret,omitempty"`
-	Location             *Location     `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	EntitySecret *EntitySecret `protobuf:"bytes,1,opt,name=entitySecret" json:"entitySecret,omitempty"`
+	Location     *Location     `protobuf:"bytes,2,opt,name=location" json:"location,omitempty"`
 }
 
-func (m *Perspective) Reset()         { *m = Perspective{} }
-func (m *Perspective) String() string { return proto.CompactTextString(m) }
-func (*Perspective) ProtoMessage()    {}
-func (*Perspective) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{42}
-}
-func (m *Perspective) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Perspective.Unmarshal(m, b)
-}
-func (m *Perspective) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Perspective.Marshal(b, m, deterministic)
-}
-func (dst *Perspective) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Perspective.Merge(dst, src)
-}
-func (m *Perspective) XXX_Size() int {
-	return xxx_messageInfo_Perspective.Size(m)
-}
-func (m *Perspective) XXX_DiscardUnknown() {
-	xxx_messageInfo_Perspective.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Perspective proto.InternalMessageInfo
+func (m *Perspective) Reset()                    { *m = Perspective{} }
+func (m *Perspective) String() string            { return proto.CompactTextString(m) }
+func (*Perspective) ProtoMessage()               {}
+func (*Perspective) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{42} }
 
 func (m *Perspective) GetEntitySecret() *EntitySecret {
 	if m != nil {
@@ -2373,37 +1417,15 @@ func (m *Perspective) GetLocation() *Location {
 
 type Location struct {
 	// One of the following
-	LocationURI *LocationURI `protobuf:"bytes,1,opt,name=locationURI,proto3" json:"locationURI,omitempty"`
+	LocationURI *LocationURI `protobuf:"bytes,1,opt,name=locationURI" json:"locationURI,omitempty"`
 	// The name of a location in the agent config
-	AgentLocation        string   `protobuf:"bytes,2,opt,name=agentLocation,proto3" json:"agentLocation,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	AgentLocation string `protobuf:"bytes,2,opt,name=agentLocation" json:"agentLocation,omitempty"`
 }
 
-func (m *Location) Reset()         { *m = Location{} }
-func (m *Location) String() string { return proto.CompactTextString(m) }
-func (*Location) ProtoMessage()    {}
-func (*Location) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{43}
-}
-func (m *Location) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Location.Unmarshal(m, b)
-}
-func (m *Location) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Location.Marshal(b, m, deterministic)
-}
-func (dst *Location) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Location.Merge(dst, src)
-}
-func (m *Location) XXX_Size() int {
-	return xxx_messageInfo_Location.Size(m)
-}
-func (m *Location) XXX_DiscardUnknown() {
-	xxx_messageInfo_Location.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Location proto.InternalMessageInfo
+func (m *Location) Reset()                    { *m = Location{} }
+func (m *Location) String() string            { return proto.CompactTextString(m) }
+func (*Location) ProtoMessage()               {}
+func (*Location) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{43} }
 
 func (m *Location) GetLocationURI() *LocationURI {
 	if m != nil {
@@ -2420,36 +1442,14 @@ func (m *Location) GetAgentLocation() string {
 }
 
 type LocationURI struct {
-	URI                  string   `protobuf:"bytes,1,opt,name=URI,proto3" json:"URI,omitempty"`
-	Version              int32    `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	URI     string `protobuf:"bytes,1,opt,name=URI" json:"URI,omitempty"`
+	Version int32  `protobuf:"varint,2,opt,name=version" json:"version,omitempty"`
 }
 
-func (m *LocationURI) Reset()         { *m = LocationURI{} }
-func (m *LocationURI) String() string { return proto.CompactTextString(m) }
-func (*LocationURI) ProtoMessage()    {}
-func (*LocationURI) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{44}
-}
-func (m *LocationURI) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LocationURI.Unmarshal(m, b)
-}
-func (m *LocationURI) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LocationURI.Marshal(b, m, deterministic)
-}
-func (dst *LocationURI) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocationURI.Merge(dst, src)
-}
-func (m *LocationURI) XXX_Size() int {
-	return xxx_messageInfo_LocationURI.Size(m)
-}
-func (m *LocationURI) XXX_DiscardUnknown() {
-	xxx_messageInfo_LocationURI.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LocationURI proto.InternalMessageInfo
+func (m *LocationURI) Reset()                    { *m = LocationURI{} }
+func (m *LocationURI) String() string            { return proto.CompactTextString(m) }
+func (*LocationURI) ProtoMessage()               {}
+func (*LocationURI) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{44} }
 
 func (m *LocationURI) GetURI() string {
 	if m != nil {
@@ -2466,36 +1466,14 @@ func (m *LocationURI) GetVersion() int32 {
 }
 
 type EntitySecret struct {
-	DER                  []byte   `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
-	Passphrase           []byte   `protobuf:"bytes,2,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	DER        []byte `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
+	Passphrase []byte `protobuf:"bytes,2,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
 }
 
-func (m *EntitySecret) Reset()         { *m = EntitySecret{} }
-func (m *EntitySecret) String() string { return proto.CompactTextString(m) }
-func (*EntitySecret) ProtoMessage()    {}
-func (*EntitySecret) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{45}
-}
-func (m *EntitySecret) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EntitySecret.Unmarshal(m, b)
-}
-func (m *EntitySecret) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EntitySecret.Marshal(b, m, deterministic)
-}
-func (dst *EntitySecret) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EntitySecret.Merge(dst, src)
-}
-func (m *EntitySecret) XXX_Size() int {
-	return xxx_messageInfo_EntitySecret.Size(m)
-}
-func (m *EntitySecret) XXX_DiscardUnknown() {
-	xxx_messageInfo_EntitySecret.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EntitySecret proto.InternalMessageInfo
+func (m *EntitySecret) Reset()                    { *m = EntitySecret{} }
+func (m *EntitySecret) String() string            { return proto.CompactTextString(m) }
+func (*EntitySecret) ProtoMessage()               {}
+func (*EntitySecret) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{45} }
 
 func (m *EntitySecret) GetDER() []byte {
 	if m != nil {
@@ -2512,43 +1490,21 @@ func (m *EntitySecret) GetPassphrase() []byte {
 }
 
 type Attestation struct {
-	DER                  []byte               `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
-	Hash                 []byte               `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
-	Body                 *AttestationBody     `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	VerifierKey          []byte               `protobuf:"bytes,4,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
-	ProverKey            []byte               `protobuf:"bytes,5,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
-	SubjectHash          []byte               `protobuf:"bytes,6,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
-	SubjectLocation      *Location            `protobuf:"bytes,7,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
-	Validity             *AttestationValidity `protobuf:"bytes,8,opt,name=validity,proto3" json:"validity,omitempty"`
-	Partition            [][]byte             `protobuf:"bytes,9,rep,name=partition,proto3" json:"partition,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	DER             []byte               `protobuf:"bytes,1,opt,name=DER,proto3" json:"DER,omitempty"`
+	Hash            []byte               `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	Body            *AttestationBody     `protobuf:"bytes,3,opt,name=body" json:"body,omitempty"`
+	VerifierKey     []byte               `protobuf:"bytes,4,opt,name=verifierKey,proto3" json:"verifierKey,omitempty"`
+	ProverKey       []byte               `protobuf:"bytes,5,opt,name=proverKey,proto3" json:"proverKey,omitempty"`
+	SubjectHash     []byte               `protobuf:"bytes,6,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
+	SubjectLocation *Location            `protobuf:"bytes,7,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
+	Validity        *AttestationValidity `protobuf:"bytes,8,opt,name=validity" json:"validity,omitempty"`
+	Partition       [][]byte             `protobuf:"bytes,9,rep,name=partition,proto3" json:"partition,omitempty"`
 }
 
-func (m *Attestation) Reset()         { *m = Attestation{} }
-func (m *Attestation) String() string { return proto.CompactTextString(m) }
-func (*Attestation) ProtoMessage()    {}
-func (*Attestation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{46}
-}
-func (m *Attestation) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Attestation.Unmarshal(m, b)
-}
-func (m *Attestation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Attestation.Marshal(b, m, deterministic)
-}
-func (dst *Attestation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Attestation.Merge(dst, src)
-}
-func (m *Attestation) XXX_Size() int {
-	return xxx_messageInfo_Attestation.Size(m)
-}
-func (m *Attestation) XXX_DiscardUnknown() {
-	xxx_messageInfo_Attestation.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Attestation proto.InternalMessageInfo
+func (m *Attestation) Reset()                    { *m = Attestation{} }
+func (m *Attestation) String() string            { return proto.CompactTextString(m) }
+func (*Attestation) ProtoMessage()               {}
+func (*Attestation) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{46} }
 
 func (m *Attestation) GetDER() []byte {
 	if m != nil {
@@ -2614,40 +1570,18 @@ func (m *Attestation) GetPartition() [][]byte {
 }
 
 type AttestationBody struct {
-	DecodedBodyDER       []byte    `protobuf:"bytes,1,opt,name=DecodedBodyDER,proto3" json:"DecodedBodyDER,omitempty"`
-	AttesterHash         []byte    `protobuf:"bytes,2,opt,name=attesterHash,proto3" json:"attesterHash,omitempty"`
-	AttesterLocation     *Location `protobuf:"bytes,3,opt,name=attesterLocation,proto3" json:"attesterLocation,omitempty"`
-	Policy               *Policy   `protobuf:"bytes,4,opt,name=policy,proto3" json:"policy,omitempty"`
-	ValidFrom            int64     `protobuf:"varint,5,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
-	ValidUntil           int64     `protobuf:"varint,6,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	DecodedBodyDER   []byte    `protobuf:"bytes,1,opt,name=DecodedBodyDER,proto3" json:"DecodedBodyDER,omitempty"`
+	AttesterHash     []byte    `protobuf:"bytes,2,opt,name=attesterHash,proto3" json:"attesterHash,omitempty"`
+	AttesterLocation *Location `protobuf:"bytes,3,opt,name=attesterLocation" json:"attesterLocation,omitempty"`
+	Policy           *Policy   `protobuf:"bytes,4,opt,name=policy" json:"policy,omitempty"`
+	ValidFrom        int64     `protobuf:"varint,5,opt,name=validFrom" json:"validFrom,omitempty"`
+	ValidUntil       int64     `protobuf:"varint,6,opt,name=validUntil" json:"validUntil,omitempty"`
 }
 
-func (m *AttestationBody) Reset()         { *m = AttestationBody{} }
-func (m *AttestationBody) String() string { return proto.CompactTextString(m) }
-func (*AttestationBody) ProtoMessage()    {}
-func (*AttestationBody) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{47}
-}
-func (m *AttestationBody) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AttestationBody.Unmarshal(m, b)
-}
-func (m *AttestationBody) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AttestationBody.Marshal(b, m, deterministic)
-}
-func (dst *AttestationBody) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AttestationBody.Merge(dst, src)
-}
-func (m *AttestationBody) XXX_Size() int {
-	return xxx_messageInfo_AttestationBody.Size(m)
-}
-func (m *AttestationBody) XXX_DiscardUnknown() {
-	xxx_messageInfo_AttestationBody.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AttestationBody proto.InternalMessageInfo
+func (m *AttestationBody) Reset()                    { *m = AttestationBody{} }
+func (m *AttestationBody) String() string            { return proto.CompactTextString(m) }
+func (*AttestationBody) ProtoMessage()               {}
+func (*AttestationBody) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{47} }
 
 func (m *AttestationBody) GetDecodedBodyDER() []byte {
 	if m != nil {
@@ -2692,43 +1626,21 @@ func (m *AttestationBody) GetValidUntil() int64 {
 }
 
 type AttestationValidity struct {
-	Valid                bool     `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Revoked              bool     `protobuf:"varint,2,opt,name=revoked,proto3" json:"revoked,omitempty"`
-	Expired              bool     `protobuf:"varint,3,opt,name=expired,proto3" json:"expired,omitempty"`
-	Malformed            bool     `protobuf:"varint,4,opt,name=malformed,proto3" json:"malformed,omitempty"`
-	NotDecrypted         bool     `protobuf:"varint,5,opt,name=notDecrypted,proto3" json:"notDecrypted,omitempty"`
-	SrcInvalid           bool     `protobuf:"varint,6,opt,name=srcInvalid,proto3" json:"srcInvalid,omitempty"`
-	DstInvalid           bool     `protobuf:"varint,7,opt,name=dstInvalid,proto3" json:"dstInvalid,omitempty"`
-	Message              string   `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
-	NotValidYet          bool     `protobuf:"varint,9,opt,name=notValidYet,proto3" json:"notValidYet,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Valid        bool   `protobuf:"varint,1,opt,name=valid" json:"valid,omitempty"`
+	Revoked      bool   `protobuf:"varint,2,opt,name=revoked" json:"revoked,omitempty"`
+	Expired      bool   `protobuf:"varint,3,opt,name=expired" json:"expired,omitempty"`
+	Malformed    bool   `protobuf:"varint,4,opt,name=malformed" json:"malformed,omitempty"`
+	NotDecrypted bool   `protobuf:"varint,5,opt,name=notDecrypted" json:"notDecrypted,omitempty"`
+	SrcInvalid   bool   `protobuf:"varint,6,opt,name=srcInvalid" json:"srcInvalid,omitempty"`
+	DstInvalid   bool   `protobuf:"varint,7,opt,name=dstInvalid" json:"dstInvalid,omitempty"`
+	Message      string `protobuf:"bytes,8,opt,name=message" json:"message,omitempty"`
+	NotValidYet  bool   `protobuf:"varint,9,opt,name=notValidYet" json:"notValidYet,omitempty"`
 }
 
-func (m *AttestationValidity) Reset()         { *m = AttestationValidity{} }
-func (m *AttestationValidity) String() string { return proto.CompactTextString(m) }
-func (*AttestationValidity) ProtoMessage()    {}
-func (*AttestationValidity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{48}
-}
-func (m *AttestationValidity) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AttestationValidity.Unmarshal(m, b)
-}
-func (m *AttestationValidity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AttestationValidity.Marshal(b, m, deterministic)
-}
-func (dst *AttestationValidity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AttestationValidity.Merge(dst, src)
-}
-func (m *AttestationValidity) XXX_Size() int {
-	return xxx_messageInfo_AttestationValidity.Size(m)
-}
-func (m *AttestationValidity) XXX_DiscardUnknown() {
-	xxx_messageInfo_AttestationValidity.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AttestationValidity proto.InternalMessageInfo
+func (m *AttestationValidity) Reset()                    { *m = AttestationValidity{} }
+func (m *AttestationValidity) String() string            { return proto.CompactTextString(m) }
+func (*AttestationValidity) ProtoMessage()               {}
+func (*AttestationValidity) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{48} }
 
 func (m *AttestationValidity) GetValid() bool {
 	if m != nil {
@@ -2794,40 +1706,18 @@ func (m *AttestationValidity) GetNotValidYet() bool {
 }
 
 type EntityValidity struct {
-	Valid                bool     `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Revoked              bool     `protobuf:"varint,2,opt,name=revoked,proto3" json:"revoked,omitempty"`
-	Expired              bool     `protobuf:"varint,3,opt,name=expired,proto3" json:"expired,omitempty"`
-	Malformed            bool     `protobuf:"varint,4,opt,name=malformed,proto3" json:"malformed,omitempty"`
-	Message              string   `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	NotValidYet          bool     `protobuf:"varint,6,opt,name=notValidYet,proto3" json:"notValidYet,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Valid       bool   `protobuf:"varint,1,opt,name=valid" json:"valid,omitempty"`
+	Revoked     bool   `protobuf:"varint,2,opt,name=revoked" json:"revoked,omitempty"`
+	Expired     bool   `protobuf:"varint,3,opt,name=expired" json:"expired,omitempty"`
+	Malformed   bool   `protobuf:"varint,4,opt,name=malformed" json:"malformed,omitempty"`
+	Message     string `protobuf:"bytes,5,opt,name=message" json:"message,omitempty"`
+	NotValidYet bool   `protobuf:"varint,6,opt,name=notValidYet" json:"notValidYet,omitempty"`
 }
 
-func (m *EntityValidity) Reset()         { *m = EntityValidity{} }
-func (m *EntityValidity) String() string { return proto.CompactTextString(m) }
-func (*EntityValidity) ProtoMessage()    {}
-func (*EntityValidity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{49}
-}
-func (m *EntityValidity) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EntityValidity.Unmarshal(m, b)
-}
-func (m *EntityValidity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EntityValidity.Marshal(b, m, deterministic)
-}
-func (dst *EntityValidity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EntityValidity.Merge(dst, src)
-}
-func (m *EntityValidity) XXX_Size() int {
-	return xxx_messageInfo_EntityValidity.Size(m)
-}
-func (m *EntityValidity) XXX_DiscardUnknown() {
-	xxx_messageInfo_EntityValidity.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EntityValidity proto.InternalMessageInfo
+func (m *EntityValidity) Reset()                    { *m = EntityValidity{} }
+func (m *EntityValidity) String() string            { return proto.CompactTextString(m) }
+func (*EntityValidity) ProtoMessage()               {}
+func (*EntityValidity) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{49} }
 
 func (m *EntityValidity) GetValid() bool {
 	if m != nil {
@@ -2872,40 +1762,18 @@ func (m *EntityValidity) GetNotValidYet() bool {
 }
 
 type NameDeclarationValidity struct {
-	Valid                bool     `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Revoked              bool     `protobuf:"varint,2,opt,name=revoked,proto3" json:"revoked,omitempty"`
-	Expired              bool     `protobuf:"varint,3,opt,name=expired,proto3" json:"expired,omitempty"`
-	Malformed            bool     `protobuf:"varint,4,opt,name=malformed,proto3" json:"malformed,omitempty"`
-	Message              string   `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	NotValidYet          bool     `protobuf:"varint,6,opt,name=notValidYet,proto3" json:"notValidYet,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Valid       bool   `protobuf:"varint,1,opt,name=valid" json:"valid,omitempty"`
+	Revoked     bool   `protobuf:"varint,2,opt,name=revoked" json:"revoked,omitempty"`
+	Expired     bool   `protobuf:"varint,3,opt,name=expired" json:"expired,omitempty"`
+	Malformed   bool   `protobuf:"varint,4,opt,name=malformed" json:"malformed,omitempty"`
+	Message     string `protobuf:"bytes,5,opt,name=message" json:"message,omitempty"`
+	NotValidYet bool   `protobuf:"varint,6,opt,name=notValidYet" json:"notValidYet,omitempty"`
 }
 
-func (m *NameDeclarationValidity) Reset()         { *m = NameDeclarationValidity{} }
-func (m *NameDeclarationValidity) String() string { return proto.CompactTextString(m) }
-func (*NameDeclarationValidity) ProtoMessage()    {}
-func (*NameDeclarationValidity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{50}
-}
-func (m *NameDeclarationValidity) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NameDeclarationValidity.Unmarshal(m, b)
-}
-func (m *NameDeclarationValidity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NameDeclarationValidity.Marshal(b, m, deterministic)
-}
-func (dst *NameDeclarationValidity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NameDeclarationValidity.Merge(dst, src)
-}
-func (m *NameDeclarationValidity) XXX_Size() int {
-	return xxx_messageInfo_NameDeclarationValidity.Size(m)
-}
-func (m *NameDeclarationValidity) XXX_DiscardUnknown() {
-	xxx_messageInfo_NameDeclarationValidity.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NameDeclarationValidity proto.InternalMessageInfo
+func (m *NameDeclarationValidity) Reset()                    { *m = NameDeclarationValidity{} }
+func (m *NameDeclarationValidity) String() string            { return proto.CompactTextString(m) }
+func (*NameDeclarationValidity) ProtoMessage()               {}
+func (*NameDeclarationValidity) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{50} }
 
 func (m *NameDeclarationValidity) GetValid() bool {
 	if m != nil {
@@ -2950,36 +1818,14 @@ func (m *NameDeclarationValidity) GetNotValidYet() bool {
 }
 
 type Policy struct {
-	TrustLevelPolicy     *TrustLevelPolicy `protobuf:"bytes,1,opt,name=trustLevelPolicy,proto3" json:"trustLevelPolicy,omitempty"`
-	RTreePolicy          *RTreePolicy      `protobuf:"bytes,2,opt,name=rTreePolicy,proto3" json:"rTreePolicy,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	TrustLevelPolicy *TrustLevelPolicy `protobuf:"bytes,1,opt,name=trustLevelPolicy" json:"trustLevelPolicy,omitempty"`
+	RTreePolicy      *RTreePolicy      `protobuf:"bytes,2,opt,name=rTreePolicy" json:"rTreePolicy,omitempty"`
 }
 
-func (m *Policy) Reset()         { *m = Policy{} }
-func (m *Policy) String() string { return proto.CompactTextString(m) }
-func (*Policy) ProtoMessage()    {}
-func (*Policy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{51}
-}
-func (m *Policy) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Policy.Unmarshal(m, b)
-}
-func (m *Policy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Policy.Marshal(b, m, deterministic)
-}
-func (dst *Policy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Policy.Merge(dst, src)
-}
-func (m *Policy) XXX_Size() int {
-	return xxx_messageInfo_Policy.Size(m)
-}
-func (m *Policy) XXX_DiscardUnknown() {
-	xxx_messageInfo_Policy.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Policy proto.InternalMessageInfo
+func (m *Policy) Reset()                    { *m = Policy{} }
+func (m *Policy) String() string            { return proto.CompactTextString(m) }
+func (*Policy) ProtoMessage()               {}
+func (*Policy) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{51} }
 
 func (m *Policy) GetTrustLevelPolicy() *TrustLevelPolicy {
 	if m != nil {
@@ -2996,35 +1842,13 @@ func (m *Policy) GetRTreePolicy() *RTreePolicy {
 }
 
 type TrustLevelPolicy struct {
-	Trust                int32    `protobuf:"varint,1,opt,name=trust,proto3" json:"trust,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Trust int32 `protobuf:"varint,1,opt,name=trust" json:"trust,omitempty"`
 }
 
-func (m *TrustLevelPolicy) Reset()         { *m = TrustLevelPolicy{} }
-func (m *TrustLevelPolicy) String() string { return proto.CompactTextString(m) }
-func (*TrustLevelPolicy) ProtoMessage()    {}
-func (*TrustLevelPolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{52}
-}
-func (m *TrustLevelPolicy) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TrustLevelPolicy.Unmarshal(m, b)
-}
-func (m *TrustLevelPolicy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TrustLevelPolicy.Marshal(b, m, deterministic)
-}
-func (dst *TrustLevelPolicy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TrustLevelPolicy.Merge(dst, src)
-}
-func (m *TrustLevelPolicy) XXX_Size() int {
-	return xxx_messageInfo_TrustLevelPolicy.Size(m)
-}
-func (m *TrustLevelPolicy) XXX_DiscardUnknown() {
-	xxx_messageInfo_TrustLevelPolicy.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TrustLevelPolicy proto.InternalMessageInfo
+func (m *TrustLevelPolicy) Reset()                    { *m = TrustLevelPolicy{} }
+func (m *TrustLevelPolicy) String() string            { return proto.CompactTextString(m) }
+func (*TrustLevelPolicy) ProtoMessage()               {}
+func (*TrustLevelPolicy) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{52} }
 
 func (m *TrustLevelPolicy) GetTrust() int32 {
 	if m != nil {
@@ -3034,38 +1858,16 @@ func (m *TrustLevelPolicy) GetTrust() int32 {
 }
 
 type RTreePolicy struct {
-	Namespace            []byte                  `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Indirections         uint32                  `protobuf:"varint,2,opt,name=indirections,proto3" json:"indirections,omitempty"`
-	Statements           []*RTreePolicyStatement `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
-	VisibilityURI        [][]byte                `protobuf:"bytes,4,rep,name=visibilityURI,proto3" json:"visibilityURI,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
-	XXX_unrecognized     []byte                  `json:"-"`
-	XXX_sizecache        int32                   `json:"-"`
+	Namespace     []byte                  `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Indirections  uint32                  `protobuf:"varint,2,opt,name=indirections" json:"indirections,omitempty"`
+	Statements    []*RTreePolicyStatement `protobuf:"bytes,3,rep,name=statements" json:"statements,omitempty"`
+	VisibilityURI [][]byte                `protobuf:"bytes,4,rep,name=visibilityURI,proto3" json:"visibilityURI,omitempty"`
 }
 
-func (m *RTreePolicy) Reset()         { *m = RTreePolicy{} }
-func (m *RTreePolicy) String() string { return proto.CompactTextString(m) }
-func (*RTreePolicy) ProtoMessage()    {}
-func (*RTreePolicy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{53}
-}
-func (m *RTreePolicy) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RTreePolicy.Unmarshal(m, b)
-}
-func (m *RTreePolicy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RTreePolicy.Marshal(b, m, deterministic)
-}
-func (dst *RTreePolicy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RTreePolicy.Merge(dst, src)
-}
-func (m *RTreePolicy) XXX_Size() int {
-	return xxx_messageInfo_RTreePolicy.Size(m)
-}
-func (m *RTreePolicy) XXX_DiscardUnknown() {
-	xxx_messageInfo_RTreePolicy.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RTreePolicy proto.InternalMessageInfo
+func (m *RTreePolicy) Reset()                    { *m = RTreePolicy{} }
+func (m *RTreePolicy) String() string            { return proto.CompactTextString(m) }
+func (*RTreePolicy) ProtoMessage()               {}
+func (*RTreePolicy) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{53} }
 
 func (m *RTreePolicy) GetNamespace() []byte {
 	if m != nil {
@@ -3096,37 +1898,15 @@ func (m *RTreePolicy) GetVisibilityURI() [][]byte {
 }
 
 type RTreePolicyStatement struct {
-	PermissionSet        []byte   `protobuf:"bytes,1,opt,name=permissionSet,proto3" json:"permissionSet,omitempty"`
-	Permissions          []string `protobuf:"bytes,2,rep,name=permissions,proto3" json:"permissions,omitempty"`
-	Resource             string   `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	PermissionSet []byte   `protobuf:"bytes,1,opt,name=permissionSet,proto3" json:"permissionSet,omitempty"`
+	Permissions   []string `protobuf:"bytes,2,rep,name=permissions" json:"permissions,omitempty"`
+	Resource      string   `protobuf:"bytes,3,opt,name=resource" json:"resource,omitempty"`
 }
 
-func (m *RTreePolicyStatement) Reset()         { *m = RTreePolicyStatement{} }
-func (m *RTreePolicyStatement) String() string { return proto.CompactTextString(m) }
-func (*RTreePolicyStatement) ProtoMessage()    {}
-func (*RTreePolicyStatement) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{54}
-}
-func (m *RTreePolicyStatement) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RTreePolicyStatement.Unmarshal(m, b)
-}
-func (m *RTreePolicyStatement) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RTreePolicyStatement.Marshal(b, m, deterministic)
-}
-func (dst *RTreePolicyStatement) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RTreePolicyStatement.Merge(dst, src)
-}
-func (m *RTreePolicyStatement) XXX_Size() int {
-	return xxx_messageInfo_RTreePolicyStatement.Size(m)
-}
-func (m *RTreePolicyStatement) XXX_DiscardUnknown() {
-	xxx_messageInfo_RTreePolicyStatement.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RTreePolicyStatement proto.InternalMessageInfo
+func (m *RTreePolicyStatement) Reset()                    { *m = RTreePolicyStatement{} }
+func (m *RTreePolicyStatement) String() string            { return proto.CompactTextString(m) }
+func (*RTreePolicyStatement) ProtoMessage()               {}
+func (*RTreePolicyStatement) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{54} }
 
 func (m *RTreePolicyStatement) GetPermissionSet() []byte {
 	if m != nil {
@@ -3150,40 +1930,18 @@ func (m *RTreePolicyStatement) GetResource() string {
 }
 
 type BuildRTreeProofParams struct {
-	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective,proto3" json:"perspective,omitempty"`
+	Perspective *Perspective `protobuf:"bytes,1,opt,name=perspective" json:"perspective,omitempty"`
 	// If omitted, will default to the perspective entity
-	SubjectHash          []byte                  `protobuf:"bytes,2,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
-	Namespace            []byte                  `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Statements           []*RTreePolicyStatement `protobuf:"bytes,4,rep,name=statements,proto3" json:"statements,omitempty"`
-	ResyncFirst          bool                    `protobuf:"varint,5,opt,name=resyncFirst,proto3" json:"resyncFirst,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
-	XXX_unrecognized     []byte                  `json:"-"`
-	XXX_sizecache        int32                   `json:"-"`
+	SubjectHash []byte                  `protobuf:"bytes,2,opt,name=subjectHash,proto3" json:"subjectHash,omitempty"`
+	Namespace   []byte                  `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Statements  []*RTreePolicyStatement `protobuf:"bytes,4,rep,name=statements" json:"statements,omitempty"`
+	ResyncFirst bool                    `protobuf:"varint,5,opt,name=resyncFirst" json:"resyncFirst,omitempty"`
 }
 
-func (m *BuildRTreeProofParams) Reset()         { *m = BuildRTreeProofParams{} }
-func (m *BuildRTreeProofParams) String() string { return proto.CompactTextString(m) }
-func (*BuildRTreeProofParams) ProtoMessage()    {}
-func (*BuildRTreeProofParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{55}
-}
-func (m *BuildRTreeProofParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_BuildRTreeProofParams.Unmarshal(m, b)
-}
-func (m *BuildRTreeProofParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_BuildRTreeProofParams.Marshal(b, m, deterministic)
-}
-func (dst *BuildRTreeProofParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BuildRTreeProofParams.Merge(dst, src)
-}
-func (m *BuildRTreeProofParams) XXX_Size() int {
-	return xxx_messageInfo_BuildRTreeProofParams.Size(m)
-}
-func (m *BuildRTreeProofParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_BuildRTreeProofParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_BuildRTreeProofParams proto.InternalMessageInfo
+func (m *BuildRTreeProofParams) Reset()                    { *m = BuildRTreeProofParams{} }
+func (m *BuildRTreeProofParams) String() string            { return proto.CompactTextString(m) }
+func (*BuildRTreeProofParams) ProtoMessage()               {}
+func (*BuildRTreeProofParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{55} }
 
 func (m *BuildRTreeProofParams) GetPerspective() *Perspective {
 	if m != nil {
@@ -3221,37 +1979,15 @@ func (m *BuildRTreeProofParams) GetResyncFirst() bool {
 }
 
 type BuildRTreeProofResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Result               *Proof   `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
-	ProofDER             []byte   `protobuf:"bytes,3,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error    *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Result   *Proof `protobuf:"bytes,2,opt,name=result" json:"result,omitempty"`
+	ProofDER []byte `protobuf:"bytes,3,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
 }
 
-func (m *BuildRTreeProofResponse) Reset()         { *m = BuildRTreeProofResponse{} }
-func (m *BuildRTreeProofResponse) String() string { return proto.CompactTextString(m) }
-func (*BuildRTreeProofResponse) ProtoMessage()    {}
-func (*BuildRTreeProofResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{56}
-}
-func (m *BuildRTreeProofResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_BuildRTreeProofResponse.Unmarshal(m, b)
-}
-func (m *BuildRTreeProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_BuildRTreeProofResponse.Marshal(b, m, deterministic)
-}
-func (dst *BuildRTreeProofResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BuildRTreeProofResponse.Merge(dst, src)
-}
-func (m *BuildRTreeProofResponse) XXX_Size() int {
-	return xxx_messageInfo_BuildRTreeProofResponse.Size(m)
-}
-func (m *BuildRTreeProofResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_BuildRTreeProofResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_BuildRTreeProofResponse proto.InternalMessageInfo
+func (m *BuildRTreeProofResponse) Reset()                    { *m = BuildRTreeProofResponse{} }
+func (m *BuildRTreeProofResponse) String() string            { return proto.CompactTextString(m) }
+func (*BuildRTreeProofResponse) ProtoMessage()               {}
+func (*BuildRTreeProofResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{56} }
 
 func (m *BuildRTreeProofResponse) GetError() *Error {
 	if m != nil {
@@ -3275,36 +2011,14 @@ func (m *BuildRTreeProofResponse) GetProofDER() []byte {
 }
 
 type VerifyProofParams struct {
-	ProofDER             []byte       `protobuf:"bytes,1,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
-	RequiredRTreePolicy  *RTreePolicy `protobuf:"bytes,2,opt,name=requiredRTreePolicy,proto3" json:"requiredRTreePolicy,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	ProofDER            []byte       `protobuf:"bytes,1,opt,name=proofDER,proto3" json:"proofDER,omitempty"`
+	RequiredRTreePolicy *RTreePolicy `protobuf:"bytes,2,opt,name=requiredRTreePolicy" json:"requiredRTreePolicy,omitempty"`
 }
 
-func (m *VerifyProofParams) Reset()         { *m = VerifyProofParams{} }
-func (m *VerifyProofParams) String() string { return proto.CompactTextString(m) }
-func (*VerifyProofParams) ProtoMessage()    {}
-func (*VerifyProofParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{57}
-}
-func (m *VerifyProofParams) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_VerifyProofParams.Unmarshal(m, b)
-}
-func (m *VerifyProofParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_VerifyProofParams.Marshal(b, m, deterministic)
-}
-func (dst *VerifyProofParams) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VerifyProofParams.Merge(dst, src)
-}
-func (m *VerifyProofParams) XXX_Size() int {
-	return xxx_messageInfo_VerifyProofParams.Size(m)
-}
-func (m *VerifyProofParams) XXX_DiscardUnknown() {
-	xxx_messageInfo_VerifyProofParams.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_VerifyProofParams proto.InternalMessageInfo
+func (m *VerifyProofParams) Reset()                    { *m = VerifyProofParams{} }
+func (m *VerifyProofParams) String() string            { return proto.CompactTextString(m) }
+func (*VerifyProofParams) ProtoMessage()               {}
+func (*VerifyProofParams) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{57} }
 
 func (m *VerifyProofParams) GetProofDER() []byte {
 	if m != nil {
@@ -3321,36 +2035,14 @@ func (m *VerifyProofParams) GetRequiredRTreePolicy() *RTreePolicy {
 }
 
 type VerifyProofResponse struct {
-	Error                *Error   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	Result               *Proof   `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Error  *Error `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Result *Proof `protobuf:"bytes,2,opt,name=result" json:"result,omitempty"`
 }
 
-func (m *VerifyProofResponse) Reset()         { *m = VerifyProofResponse{} }
-func (m *VerifyProofResponse) String() string { return proto.CompactTextString(m) }
-func (*VerifyProofResponse) ProtoMessage()    {}
-func (*VerifyProofResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{58}
-}
-func (m *VerifyProofResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_VerifyProofResponse.Unmarshal(m, b)
-}
-func (m *VerifyProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_VerifyProofResponse.Marshal(b, m, deterministic)
-}
-func (dst *VerifyProofResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VerifyProofResponse.Merge(dst, src)
-}
-func (m *VerifyProofResponse) XXX_Size() int {
-	return xxx_messageInfo_VerifyProofResponse.Size(m)
-}
-func (m *VerifyProofResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_VerifyProofResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_VerifyProofResponse proto.InternalMessageInfo
+func (m *VerifyProofResponse) Reset()                    { *m = VerifyProofResponse{} }
+func (m *VerifyProofResponse) String() string            { return proto.CompactTextString(m) }
+func (*VerifyProofResponse) ProtoMessage()               {}
+func (*VerifyProofResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{58} }
 
 func (m *VerifyProofResponse) GetError() *Error {
 	if m != nil {
@@ -3367,40 +2059,18 @@ func (m *VerifyProofResponse) GetResult() *Proof {
 }
 
 type Proof struct {
-	Elements             []*Attestation `protobuf:"bytes,1,rep,name=elements,proto3" json:"elements,omitempty"`
-	Paths                []*ProofPath   `protobuf:"bytes,2,rep,name=paths,proto3" json:"paths,omitempty"`
-	Policy               *Policy        `protobuf:"bytes,3,opt,name=policy,proto3" json:"policy,omitempty"`
-	Expiry               int64          `protobuf:"varint,4,opt,name=expiry,proto3" json:"expiry,omitempty"`
-	Subject              []byte         `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
-	SubjectLocation      *Location      `protobuf:"bytes,6,opt,name=subjectLocation,proto3" json:"subjectLocation,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	Elements        []*Attestation `protobuf:"bytes,1,rep,name=elements" json:"elements,omitempty"`
+	Paths           []*ProofPath   `protobuf:"bytes,2,rep,name=paths" json:"paths,omitempty"`
+	Policy          *Policy        `protobuf:"bytes,3,opt,name=policy" json:"policy,omitempty"`
+	Expiry          int64          `protobuf:"varint,4,opt,name=expiry" json:"expiry,omitempty"`
+	Subject         []byte         `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
+	SubjectLocation *Location      `protobuf:"bytes,6,opt,name=subjectLocation" json:"subjectLocation,omitempty"`
 }
 
-func (m *Proof) Reset()         { *m = Proof{} }
-func (m *Proof) String() string { return proto.CompactTextString(m) }
-func (*Proof) ProtoMessage()    {}
-func (*Proof) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{59}
-}
-func (m *Proof) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Proof.Unmarshal(m, b)
-}
-func (m *Proof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Proof.Marshal(b, m, deterministic)
-}
-func (dst *Proof) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Proof.Merge(dst, src)
-}
-func (m *Proof) XXX_Size() int {
-	return xxx_messageInfo_Proof.Size(m)
-}
-func (m *Proof) XXX_DiscardUnknown() {
-	xxx_messageInfo_Proof.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Proof proto.InternalMessageInfo
+func (m *Proof) Reset()                    { *m = Proof{} }
+func (m *Proof) String() string            { return proto.CompactTextString(m) }
+func (*Proof) ProtoMessage()               {}
+func (*Proof) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{59} }
 
 func (m *Proof) GetElements() []*Attestation {
 	if m != nil {
@@ -3445,35 +2115,13 @@ func (m *Proof) GetSubjectLocation() *Location {
 }
 
 type ProofPath struct {
-	Elements             []int32  `protobuf:"varint,1,rep,packed,name=elements,proto3" json:"elements,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Elements []int32 `protobuf:"varint,1,rep,packed,name=elements" json:"elements,omitempty"`
 }
 
-func (m *ProofPath) Reset()         { *m = ProofPath{} }
-func (m *ProofPath) String() string { return proto.CompactTextString(m) }
-func (*ProofPath) ProtoMessage()    {}
-func (*ProofPath) Descriptor() ([]byte, []int) {
-	return fileDescriptor_eapi_c1717eeea6796297, []int{60}
-}
-func (m *ProofPath) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProofPath.Unmarshal(m, b)
-}
-func (m *ProofPath) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProofPath.Marshal(b, m, deterministic)
-}
-func (dst *ProofPath) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProofPath.Merge(dst, src)
-}
-func (m *ProofPath) XXX_Size() int {
-	return xxx_messageInfo_ProofPath.Size(m)
-}
-func (m *ProofPath) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProofPath.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProofPath proto.InternalMessageInfo
+func (m *ProofPath) Reset()                    { *m = ProofPath{} }
+func (m *ProofPath) String() string            { return proto.CompactTextString(m) }
+func (*ProofPath) ProtoMessage()               {}
+func (*ProofPath) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{60} }
 
 func (m *ProofPath) GetElements() []int32 {
 	if m != nil {
@@ -3502,7 +2150,6 @@ func init() {
 	proto.RegisterType((*InspectResponse)(nil), "mqpb.InspectResponse")
 	proto.RegisterType((*ListLocationsParams)(nil), "mqpb.ListLocationsParams")
 	proto.RegisterType((*ListLocationsResponse)(nil), "mqpb.ListLocationsResponse")
-	proto.RegisterMapType((map[string]*Location)(nil), "mqpb.ListLocationsResponse.AgentLocationsEntry")
 	proto.RegisterType((*CreateEntityParams)(nil), "mqpb.CreateEntityParams")
 	proto.RegisterType((*CreateEntityResponse)(nil), "mqpb.CreateEntityResponse")
 	proto.RegisterType((*Entity)(nil), "mqpb.Entity")
@@ -3515,9 +2162,7 @@ func init() {
 	proto.RegisterType((*DecryptMessageParams)(nil), "mqpb.DecryptMessageParams")
 	proto.RegisterType((*DecryptMessageResponse)(nil), "mqpb.DecryptMessageResponse")
 	proto.RegisterType((*SyncResponse)(nil), "mqpb.SyncResponse")
-	proto.RegisterMapType((map[string]*StorageDriverStatus)(nil), "mqpb.SyncResponse.StorageStatusEntry")
 	proto.RegisterType((*StorageDriverStatus)(nil), "mqpb.StorageDriverStatus")
-	proto.RegisterMapType((map[string]string)(nil), "mqpb.StorageDriverStatus.InfoEntry")
 	proto.RegisterType((*CreateAttestationResponse)(nil), "mqpb.CreateAttestationResponse")
 	proto.RegisterType((*PublishEntityParams)(nil), "mqpb.PublishEntityParams")
 	proto.RegisterType((*PublishEntityResponse)(nil), "mqpb.PublishEntityResponse")
@@ -3557,9 +2202,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// WAVEClient is the client API for WAVE service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for WAVE service
+
 type WAVEClient interface {
 	// Create a new WAVE entity, but do not publish it
 	CreateEntity(ctx context.Context, in *CreateEntityParams, opts ...grpc.CallOption) (*CreateEntityResponse, error)
@@ -3601,7 +2245,7 @@ func NewWAVEClient(cc *grpc.ClientConn) WAVEClient {
 
 func (c *wAVEClient) CreateEntity(ctx context.Context, in *CreateEntityParams, opts ...grpc.CallOption) (*CreateEntityResponse, error) {
 	out := new(CreateEntityResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/CreateEntity", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/CreateEntity", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3610,7 +2254,7 @@ func (c *wAVEClient) CreateEntity(ctx context.Context, in *CreateEntityParams, o
 
 func (c *wAVEClient) CreateAttestation(ctx context.Context, in *CreateAttestationParams, opts ...grpc.CallOption) (*CreateAttestationResponse, error) {
 	out := new(CreateAttestationResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/CreateAttestation", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/CreateAttestation", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3619,7 +2263,7 @@ func (c *wAVEClient) CreateAttestation(ctx context.Context, in *CreateAttestatio
 
 func (c *wAVEClient) PublishEntity(ctx context.Context, in *PublishEntityParams, opts ...grpc.CallOption) (*PublishEntityResponse, error) {
 	out := new(PublishEntityResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/PublishEntity", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/PublishEntity", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3628,7 +2272,7 @@ func (c *wAVEClient) PublishEntity(ctx context.Context, in *PublishEntityParams,
 
 func (c *wAVEClient) PublishAttestation(ctx context.Context, in *PublishAttestationParams, opts ...grpc.CallOption) (*PublishAttestationResponse, error) {
 	out := new(PublishAttestationResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/PublishAttestation", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/PublishAttestation", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3637,7 +2281,7 @@ func (c *wAVEClient) PublishAttestation(ctx context.Context, in *PublishAttestat
 
 func (c *wAVEClient) AddAttestation(ctx context.Context, in *AddAttestationParams, opts ...grpc.CallOption) (*AddAttestationResponse, error) {
 	out := new(AddAttestationResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/AddAttestation", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/AddAttestation", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3646,7 +2290,7 @@ func (c *wAVEClient) AddAttestation(ctx context.Context, in *AddAttestationParam
 
 func (c *wAVEClient) LookupAttestations(ctx context.Context, in *LookupAttestationsParams, opts ...grpc.CallOption) (*LookupAttestationsResponse, error) {
 	out := new(LookupAttestationsResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/LookupAttestations", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/LookupAttestations", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3655,7 +2299,7 @@ func (c *wAVEClient) LookupAttestations(ctx context.Context, in *LookupAttestati
 
 func (c *wAVEClient) ResyncPerspectiveGraph(ctx context.Context, in *ResyncPerspectiveGraphParams, opts ...grpc.CallOption) (*ResyncPerspectiveGraphResponse, error) {
 	out := new(ResyncPerspectiveGraphResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/ResyncPerspectiveGraph", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/ResyncPerspectiveGraph", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3664,7 +2308,7 @@ func (c *wAVEClient) ResyncPerspectiveGraph(ctx context.Context, in *ResyncPersp
 
 func (c *wAVEClient) SyncStatus(ctx context.Context, in *SyncParams, opts ...grpc.CallOption) (*SyncResponse, error) {
 	out := new(SyncResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/SyncStatus", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/SyncStatus", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3672,7 +2316,7 @@ func (c *wAVEClient) SyncStatus(ctx context.Context, in *SyncParams, opts ...grp
 }
 
 func (c *wAVEClient) WaitForSyncComplete(ctx context.Context, in *SyncParams, opts ...grpc.CallOption) (WAVE_WaitForSyncCompleteClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_WAVE_serviceDesc.Streams[0], "/mqpb.WAVE/WaitForSyncComplete", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_WAVE_serviceDesc.Streams[0], c.cc, "/mqpb.WAVE/WaitForSyncComplete", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3705,7 +2349,7 @@ func (x *wAVEWaitForSyncCompleteClient) Recv() (*SyncResponse, error) {
 
 func (c *wAVEClient) BuildRTreeProof(ctx context.Context, in *BuildRTreeProofParams, opts ...grpc.CallOption) (*BuildRTreeProofResponse, error) {
 	out := new(BuildRTreeProofResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/BuildRTreeProof", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/BuildRTreeProof", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3714,7 +2358,7 @@ func (c *wAVEClient) BuildRTreeProof(ctx context.Context, in *BuildRTreeProofPar
 
 func (c *wAVEClient) VerifyProof(ctx context.Context, in *VerifyProofParams, opts ...grpc.CallOption) (*VerifyProofResponse, error) {
 	out := new(VerifyProofResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/VerifyProof", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/VerifyProof", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3723,7 +2367,7 @@ func (c *wAVEClient) VerifyProof(ctx context.Context, in *VerifyProofParams, opt
 
 func (c *wAVEClient) ListLocations(ctx context.Context, in *ListLocationsParams, opts ...grpc.CallOption) (*ListLocationsResponse, error) {
 	out := new(ListLocationsResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/ListLocations", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/ListLocations", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3732,7 +2376,7 @@ func (c *wAVEClient) ListLocations(ctx context.Context, in *ListLocationsParams,
 
 func (c *wAVEClient) Inspect(ctx context.Context, in *InspectParams, opts ...grpc.CallOption) (*InspectResponse, error) {
 	out := new(InspectResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/Inspect", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/Inspect", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3741,7 +2385,7 @@ func (c *wAVEClient) Inspect(ctx context.Context, in *InspectParams, opts ...grp
 
 func (c *wAVEClient) ResolveHash(ctx context.Context, in *ResolveHashParams, opts ...grpc.CallOption) (*ResolveHashResponse, error) {
 	out := new(ResolveHashResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/ResolveHash", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/ResolveHash", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3750,7 +2394,7 @@ func (c *wAVEClient) ResolveHash(ctx context.Context, in *ResolveHashParams, opt
 
 func (c *wAVEClient) EncryptMessage(ctx context.Context, in *EncryptMessageParams, opts ...grpc.CallOption) (*EncryptMessageResponse, error) {
 	out := new(EncryptMessageResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/EncryptMessage", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/EncryptMessage", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3759,7 +2403,7 @@ func (c *wAVEClient) EncryptMessage(ctx context.Context, in *EncryptMessageParam
 
 func (c *wAVEClient) DecryptMessage(ctx context.Context, in *DecryptMessageParams, opts ...grpc.CallOption) (*DecryptMessageResponse, error) {
 	out := new(DecryptMessageResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/DecryptMessage", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/DecryptMessage", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3768,7 +2412,7 @@ func (c *wAVEClient) DecryptMessage(ctx context.Context, in *DecryptMessageParam
 
 func (c *wAVEClient) CreateNameDeclaration(ctx context.Context, in *CreateNameDeclarationParams, opts ...grpc.CallOption) (*CreateNameDeclarationResponse, error) {
 	out := new(CreateNameDeclarationResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/CreateNameDeclaration", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/CreateNameDeclaration", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3777,7 +2421,7 @@ func (c *wAVEClient) CreateNameDeclaration(ctx context.Context, in *CreateNameDe
 
 func (c *wAVEClient) ResolveName(ctx context.Context, in *ResolveNameParams, opts ...grpc.CallOption) (*ResolveNameResponse, error) {
 	out := new(ResolveNameResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/ResolveName", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/ResolveName", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3786,7 +2430,7 @@ func (c *wAVEClient) ResolveName(ctx context.Context, in *ResolveNameParams, opt
 
 func (c *wAVEClient) MarkEntityInteresting(ctx context.Context, in *MarkEntityInterestingParams, opts ...grpc.CallOption) (*MarkEntityInterestingResponse, error) {
 	out := new(MarkEntityInterestingResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/MarkEntityInteresting", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/MarkEntityInteresting", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3795,7 +2439,7 @@ func (c *wAVEClient) MarkEntityInteresting(ctx context.Context, in *MarkEntityIn
 
 func (c *wAVEClient) ResolveReverseName(ctx context.Context, in *ResolveReverseNameParams, opts ...grpc.CallOption) (*ResolveReverseNameResponse, error) {
 	out := new(ResolveReverseNameResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/ResolveReverseName", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/ResolveReverseName", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3804,7 +2448,7 @@ func (c *wAVEClient) ResolveReverseName(ctx context.Context, in *ResolveReverseN
 
 func (c *wAVEClient) Revoke(ctx context.Context, in *RevokeParams, opts ...grpc.CallOption) (*RevokeResponse, error) {
 	out := new(RevokeResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/Revoke", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/Revoke", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3813,14 +2457,15 @@ func (c *wAVEClient) Revoke(ctx context.Context, in *RevokeParams, opts ...grpc.
 
 func (c *wAVEClient) CompactProof(ctx context.Context, in *CompactProofParams, opts ...grpc.CallOption) (*CompactProofResponse, error) {
 	out := new(CompactProofResponse)
-	err := c.cc.Invoke(ctx, "/mqpb.WAVE/CompactProof", in, out, opts...)
+	err := grpc.Invoke(ctx, "/mqpb.WAVE/CompactProof", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// WAVEServer is the server API for WAVE service.
+// Server API for WAVE service
+
 type WAVEServer interface {
 	// Create a new WAVE entity, but do not publish it
 	CreateEntity(context.Context, *CreateEntityParams) (*CreateEntityResponse, error)
@@ -4354,9 +2999,9 @@ var _WAVE_serviceDesc = grpc.ServiceDesc{
 	Metadata: "eapi.proto",
 }
 
-func init() { proto.RegisterFile("eapi.proto", fileDescriptor_eapi_c1717eeea6796297) }
+func init() { proto.RegisterFile("eapi.proto", fileDescriptor1) }
 
-var fileDescriptor_eapi_c1717eeea6796297 = []byte{
+var fileDescriptor1 = []byte{
 	// 2754 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x1a, 0x4d, 0x6f, 0x1c, 0x49,
 	0x55, 0x3d, 0x5f, 0x9e, 0x79, 0xe3, 0xf8, 0xa3, 0xc6, 0x76, 0x26, 0x1d, 0xdb, 0xeb, 0x54, 0x9c,
